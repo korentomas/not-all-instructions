@@ -1,0 +1,117 @@
+"""analysis analysis pipeline: extract → κ → ordered-logit.
+
+Validates the port wires up (graph compiles, samples, recovers a planted signal)
+on synthetic data, plus real extraction from a smoke `.eval` log when present.
+"""
+
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from retention.analysis import (
+    checker_judge_kappa,
+    fit_framing_logit,
+    fit_ordered_logit,
+    framing_effect,
+    load_scores,
+    treatment_ranking,
+)
+from retention.analysis.kappa import _quadratic_weighted_kappa
+
+SMOKE_LOG = Path(__file__).resolve().parents[1] / "logs" / "smoke-azure"
+
+
+def test_qwk_perfect_and_random():
+    # identical ratings → κ == 1
+    assert _quadratic_weighted_kappa([0, 1, 2, 3], [0, 1, 2, 3]) == pytest.approx(1.0)
+    # off-by-one is penalised less than off-by-three (ordinal weighting)
+    near = _quadratic_weighted_kappa([0, 1, 2, 3, 0], [1, 2, 3, 2, 1])
+    far = _quadratic_weighted_kappa([0, 1, 2, 3, 0], [3, 0, 0, 0, 3])
+    assert near > far
+
+
+def _synthetic(seed: int = 0) -> pd.DataFrame:
+    """6 decisions, baseline vs treatment; decisions 0-2 respond to treatment,
+    3-5 do not. Enough rows for the sampler to recover the split."""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for d in range(6):
+        responds = d < 3
+        for cond in ("baseline", "treatment"):
+            base = 1
+            lift = 2 if (responds and cond == "treatment") else 0
+            for rep in range(25):
+                s = int(np.clip(round(rng.normal(base + lift, 0.6)), 0, 3))
+                # `rep` -> epoch so each (decision,condition) cell has unique keys
+                rows.append({"decision": f"dec_{d}", "condition": cond,
+                             "score": s, "epoch": rep})
+    return pd.DataFrame(rows)
+
+
+def test_kappa_table_shape():
+    det = _synthetic()
+    for col in ("model", "codebase", "turn"):
+        det[col] = 0
+    judge = det.copy()
+    judge["judge"] = "judge_1"
+    k = checker_judge_kappa(det, judge)
+    # one row per judge + panel_median; identical channels → κ ≈ 1
+    assert set(k.rater) == {"judge_1", "panel_median"}
+    assert k.kappa.min() == pytest.approx(1.0)
+
+
+@pytest.mark.slow
+def test_ordered_logit_recovers_treatment_split():
+    df = _synthetic()
+    idata, _, coords = fit_ordered_logit(df, draws=300, tune=300, chains=2)
+    ranking = treatment_ranking(idata, coords)
+    responders = {f"dec_{i}" for i in range(3)}
+    top3 = set(ranking.head(3).decision)
+    # the three treatment-responsive decisions should rank highest
+    assert top3 == responders
+
+
+def _synthetic_framing(seed: int = 1) -> pd.DataFrame:
+    """6 decisions across the two framing arms; decisions 0-2 are harmed by the
+    negation frame (γ < 0), 3-5 are framing-indifferent."""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for d in range(6):
+        harmed = d < 3
+        for cond in ("treatment_positive", "treatment_negation"):
+            base = 2.2
+            drop = 1.6 if (harmed and cond == "treatment_negation") else 0
+            for rep in range(25):
+                s = int(np.clip(round(rng.normal(base - drop, 0.6)), 0, 3))
+                rows.append({"decision": f"dec_{d}", "condition": cond,
+                             "score": s, "epoch": rep})
+    return pd.DataFrame(rows)
+
+
+def test_framing_logit_rejects_non_framing_conditions():
+    df = _synthetic()  # baseline/treatment - wrong arms for the framing fit
+    with pytest.raises(ValueError, match="framing fit expects"):
+        fit_framing_logit(df)
+
+
+@pytest.mark.slow
+def test_framing_logit_recovers_negation_penalty():
+    df = _synthetic_framing()
+    idata, _, coords = fit_framing_logit(df, draws=300, tune=300, chains=2)
+    effect = framing_effect(idata, coords)
+    pooled = effect[effect.decision == "(pooled μ_γ)"].iloc[0]
+    assert pooled["mean"] < 0  # negation hurts on average in the synthetic data
+    per_dec = effect[effect.decision != "(pooled μ_γ)"].set_index("decision")["mean"]
+    harmed = per_dec[[f"dec_{i}" for i in range(3)]]
+    safe = per_dec[[f"dec_{i}" for i in range(3, 6)]]
+    assert harmed.max() < safe.min()  # the harmed/indifferent split is recovered
+
+
+@pytest.mark.skipif(not SMOKE_LOG.exists(), reason="no smoke log present")
+def test_load_scores_from_real_log():
+    det = load_scores(SMOKE_LOG)
+    assert not det.empty
+    assert set(["model", "codebase", "condition", "decision", "score"]).issubset(det.columns)
+    assert det.score.between(0, 3).all()

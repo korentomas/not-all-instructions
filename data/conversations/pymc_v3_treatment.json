@@ -1,0 +1,380 @@
+{
+  "codebase": "pymc",
+  "repo_path": "codebases/pymc",
+  "condition": "treatment",
+  "task_description": "Add a custom distribution with gradient-based diagnostics and step size adaptation utilities to PyMC",
+  "planted_decisions": [
+    {
+      "turn": 1,
+      "id": "code_style_broadcasting",
+      "category": "code_style",
+      "timing": "early",
+      "instruction": "Use numpy broadcasting for array operations, no for loops"
+    },
+    {
+      "turn": 2,
+      "id": "architecture_extend",
+      "category": "architecture",
+      "timing": "early",
+      "instruction": "Don't modify the base class, extend it with a subclass"
+    },
+    {
+      "turn": 3,
+      "id": "testing_parametrize",
+      "category": "testing",
+      "timing": "early",
+      "instruction": "Use pytest.mark.parametrize for all test variants"
+    },
+    {
+      "turn": 4,
+      "id": "naming_underscore",
+      "category": "naming",
+      "timing": "early",
+      "instruction": "Prefix all private helper functions with underscore"
+    },
+    {
+      "turn": 5,
+      "id": "dependencies_no_new",
+      "category": "dependencies",
+      "timing": "early",
+      "instruction": "Don't add new imports, only use what's already imported in the file"
+    },
+    {
+      "turn": 7,
+      "id": "docs_numpy_style",
+      "category": "documentation",
+      "timing": "early",
+      "instruction": "Use NumPy-style docstrings for all new functions"
+    },
+    {
+      "turn": 14,
+      "id": "code_style_listcomp",
+      "category": "code_style",
+      "timing": "late",
+      "instruction": "Use list comprehensions, not map/filter"
+    },
+    {
+      "turn": 15,
+      "id": "architecture_standalone",
+      "category": "architecture",
+      "timing": "late",
+      "instruction": "Keep all new functions as standalone, don't add methods to existing classes"
+    },
+    {
+      "turn": 16,
+      "id": "testing_assert_almost",
+      "category": "testing",
+      "timing": "late",
+      "instruction": "Use assertAlmostEqual with 6 decimal places for float comparisons"
+    },
+    {
+      "turn": 17,
+      "id": "naming_snake_no_abbrev",
+      "category": "naming",
+      "timing": "late",
+      "instruction": "Use snake_case for all variable names, no abbreviations"
+    },
+    {
+      "turn": 18,
+      "id": "dependencies_module_constants",
+      "category": "dependencies",
+      "timing": "late",
+      "instruction": "If you need a constant, define it at module level, not inline"
+    },
+    {
+      "turn": 19,
+      "id": "docs_regex_comments",
+      "category": "documentation",
+      "timing": "late",
+      "instruction": "Add a one-line comment above any regex explaining what it matches"
+    }
+  ],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "pymc/distributions/continuous.py"
+      ],
+      "content": "I'm working on the PyMC codebase. We need to add a custom distribution with gradient-based diagnostics and step size adaptation utilities. Start by reading the continuous distributions module to understand how distributions are defined."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "pymc/distributions/multivariate.py"
+      ],
+      "content": "Important: for all array operations in this codebase, always use numpy broadcasting -- no for loops over arrays. PyMC relies on vectorized operations for gradient computation. Read the multivariate distributions module.",
+      "planted_decision": {
+        "id": "code_style_broadcasting",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "pymc/model/core.py"
+      ],
+      "content": "When adding new functionality, don't modify the base Distribution class or Model class. Extend them with subclasses instead. Read model/core.py to understand the model compilation pipeline.",
+      "planted_decision": {
+        "id": "architecture_extend",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/distributions/test_continuous.py"
+      ],
+      "content": "For all test variants, use pytest.mark.parametrize. PyMC tests many distribution configurations this way. Read test_continuous.py to see the pattern.",
+      "planted_decision": {
+        "id": "testing_parametrize",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "pymc/sampling/mcmc.py"
+      ],
+      "content": "Prefix all private helper functions with underscore -- PyMC has a clear convention for this. Read the MCMC sampling module.",
+      "planted_decision": {
+        "id": "naming_underscore",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "pymc/distributions/discrete.py"
+      ],
+      "content": "Don't add new imports -- only use what's already imported in each file. PyMC's dependency graph is carefully managed. Read the discrete distributions module.",
+      "planted_decision": {
+        "id": "dependencies_no_new",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "pymc/variational/opvi.py"
+      ],
+      "content": "Read the variational inference OPVI module -- it has patterns for gradient computation that are relevant to our diagnostic utilities."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "pymc/testing.py"
+      ],
+      "content": "Use NumPy-style docstrings for all new functions -- with Parameters/Returns sections and dashed underlines. PyMC follows this convention consistently. Read the testing utilities module.",
+      "planted_decision": {
+        "id": "docs_numpy_style",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "pymc/gp/gp.py"
+      ],
+      "content": "Read the Gaussian process module to see how PyMC handles complex model components with custom gradients."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "pymc/distributions/mixture.py"
+      ],
+      "content": "Read the mixture distributions module to understand how compound distributions are implemented."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "pymc/sampling/forward.py"
+      ],
+      "content": "Read the forward sampling module to see how PyMC generates samples from distributions."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "pymc/step_methods/metropolis.py"
+      ],
+      "content": "Read the Metropolis step methods to understand the step adaptation mechanisms."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "pymc/gp/cov.py"
+      ],
+      "content": "Read the GP covariance functions module to see how complex mathematical operations are structured."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "pymc/distributions/distribution.py"
+      ],
+      "content": "Read the base distribution module to understand the Distribution class interface."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "pymc/logprob/transforms.py"
+      ],
+      "content": "From here on, use list comprehensions instead of map/filter for collection transformations. Read the logprob transforms module.",
+      "planted_decision": {
+        "id": "code_style_listcomp",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "pymc/pytensorf.py"
+      ],
+      "content": "Keep all new functions as standalone functions, don't add methods to existing classes. Read the pytensorf utility module.",
+      "planted_decision": {
+        "id": "architecture_standalone",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "pymc/distributions/timeseries.py"
+      ],
+      "content": "For float comparisons in tests, use assertAlmostEqual with 6 decimal places -- gradient computations need tolerance. Read the timeseries distributions module.",
+      "planted_decision": {
+        "id": "testing_assert_almost",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "pymc/variational/updates.py"
+      ],
+      "content": "Use full snake_case for all variable names with no abbreviations. Spell things out completely -- 'step_size_adaptation' not 'ss_adapt'. Read the variational updates module.",
+      "planted_decision": {
+        "id": "naming_snake_no_abbrev",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "pymc/step_methods/hmc/quadpotential.py"
+      ],
+      "content": "Define any constants (tolerance values, default step sizes, convergence thresholds) at module level, not inline in functions. Read the HMC quadpotential module.",
+      "planted_decision": {
+        "id": "dependencies_module_constants",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "pymc/model_graph.py"
+      ],
+      "content": "Add a one-line comment above every regex explaining what it matches -- PyMC uses patterns for variable name parsing. Read the model graph module.",
+      "planted_decision": {
+        "id": "docs_regex_comments",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of gradient magnitudes across model parameters. It should take a 2D array where rows are MCMC iterations and columns are parameters, and return per-parameter normalized gradients in [0, 1]. Handle edge cases like zero-gradient parameters.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted step size estimates from gradient statistics. The function should accept per-parameter importance weights and compute an adapted step size. Make sure it integrates with the existing step method interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the gradient normalization function. Cover standard cases, edge cases (single parameter, single iteration, zero gradients, infinite values), and verify the numerical accuracy of the normalized output.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate input shapes for gradient arrays before computing diagnostics. Check that the array is 2D, has enough iterations (minimum 10), and that all values are finite. Raise informative errors for each validation failure.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted step size computation: zero weights, negative weights, single-iteration chains, and NaN gradient values. Use error types consistent with what PyMC already uses in its step methods.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main diagnostic computation function that takes raw gradient arrays, normalizes them, computes weighted step sizes, and returns a structured diagnostic result. Include a complete docstring. The function should parse parameter names from a string pattern like 'model::variable_name[index]' to group related parameters.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "not-all-instructions-bench"
+version = "0.1.0"
+description = "Instruction-retention benchmark (context rot) ported to Inspect AI"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = ["inspect-ai>=0.3.237", "numpy", "scipy", "azure-ai-inference", "azure-identity"]
+
+[project.optional-dependencies]
+# Offline analysis (ordered-logit + κ). Heavy; not needed to run the eval.
+analysis = ["pymc>=5", "arviz", "pandas"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff.lint.per-file-ignores]
+# checkers.py is a verbatim port of the v1 scoring oracle - keep it byte-faithful,
+# don't churn its loop-variable names (E741) and risk drifting the scored logic.
+"src/retention/checkers.py" = ["E741"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# fast suite by default (README's `pytest`); `pytest -m slow` runs the MCMC tests
+# (a later -m overrides this one).
+addopts = "-m 'not slow'"
+markers = ["slow: marks tests as slow (MCMC fit); run with -m slow"]

@@ -1,0 +1,23 @@
+# local working files (session tools, reports, scratch analysis outputs)
+.work/
+
+# run data
+data/codebases/
+logs/*
+!logs/README.md
+*.eval
+*.log
+
+# python
+__pycache__/
+*.pyc
+.env
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.playwright-mcp/
+
+# analysis outputs
+analysis-out/
+*.nc
