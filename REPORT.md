@@ -207,6 +207,11 @@ Figure 4 — v2 per-model treatment slope: how much each model retains an instru
 Figure 5 — Treatment lift (treatment − baseline mean) per model × instruction. `testing_parametrize` is the one consistent column (teal across models); most cells flip sign by model. Cross-model agreement is weak (Kendall's W = 0.27), so *which* instruction is retained depends on the model — retention is a (model, instruction) property, not instruction-alone. The heterogeneity is real but only 44% baseline-driven; the rest is instruction-specific.
 {: .figcap}
 
+![v1 vs v2 per-decision treatment effect](report-figures/fig6_v1_v2.png)
+
+Figure 6 — Where v1 and v2 differ, per decision. Biggest shifts: `testing_parametrize` 5.44→2.67 (still the top effect), `dependencies_no_new` −2.36→−0.14 (the backfire collapses), `architecture_standalone` 2.38→0.76. Effects shrink toward a moderate, honest σ_β ≈ 1, and the harm disappears.
+{: .figcap}
+
 ## Appendix
 
 Code, data, checkers, and analysis notebooks: `experiments-v1/` (the published study) and
