@@ -13,7 +13,9 @@ from retention.analysis.model import (
     fit_framing_logit,
     fit_ordered_logit,
     framing_effect,
+    model_treatment_slopes,
     treatment_ranking,
+    variance_components,
 )
 
 __all__ = [
@@ -24,4 +26,6 @@ __all__ = [
     "fit_ordered_logit",
     "framing_effect",
     "treatment_ranking",
+    "variance_components",
+    "model_treatment_slopes",
 ]

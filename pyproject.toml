@@ -12,7 +12,7 @@ dependencies = ["inspect-ai>=0.3.237", "numpy", "scipy", "azure-ai-inference", "
 
 [project.optional-dependencies]
 # Offline analysis (ordered-logit + κ). Heavy; not needed to run the eval.
-analysis = ["pymc>=5", "arviz", "pandas"]
+analysis = ["pymc>=5", "arviz", "arviz-base", "arviz-stats>=1.0", "nutpie", "pandas"]
 dev = ["pytest"]
 
 [tool.setuptools.packages.find]

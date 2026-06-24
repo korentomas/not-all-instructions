@@ -22,12 +22,23 @@ def fit_ordered_logit(
     draws: int = 2000,
     tune: int = 2000,
     chains: int = 4,
-    target_accept: float = 0.95,
+    target_accept: float = 0.99,
 ):
-    """Fit the hierarchical ordered-logit. Returns (idata, model, coords).
+    """Fit the hierarchical ordered-logit (M4). Returns (idata, model, coords).
 
     `df` needs columns: decision, condition (baseline/treatment), score (0-3).
-    Other columns (model, codebase, turn, epoch) are pooled replicates.
+
+    When ``model`` and/or ``codebase`` columns are present with more than one level,
+    the model adds (the M4 spec, see docs/bayes-model-exploration-v5.md):
+    per-model and per-codebase baseline intercepts, plus a per-model treatment slope.
+    Model exploration showed model identity explains as much variance as the
+    instruction type (sigma_model ~ sigma_beta) and that models differ in how much
+    they retain when told (sigma_tmodel > 0); pooling these as replicates (the old
+    M0 spec) is a misspecification (LOO ~119 worse). With a single (or absent)
+    model/codebase level the model gracefully reduces to the per-decision spec.
+
+    Caveat: variance components (sigma_*) are prior-influenced because there are few
+    groups (few codebases/models); per-decision treatment-effect *rankings* are robust.
     """
     import pymc as pm
     import pytensor.tensor as pt
@@ -39,7 +50,18 @@ def fit_ordered_logit(
     treatment = (df.condition == "treatment").astype(int).values
     y = df.score.values.astype(int)
 
+    has_model = "model" in df.columns and df.model.nunique() > 1
+    has_codebase = "codebase" in df.columns and df.codebase.nunique() > 1
+
     coords = {"decision": decisions, "obs": np.arange(len(df))}
+    if has_model:
+        models = sorted(df.model.unique())
+        coords["model"] = models
+        model_idx = pd.Categorical(df.model, categories=models).codes
+    if has_codebase:
+        codebases = sorted(df.codebase.unique())
+        coords["codebase"] = codebases
+        codebase_idx = pd.Categorical(df.codebase, categories=codebases).codes
 
     with pm.Model(coords=coords) as retention_model:
         decision_data = pm.Data("decision_idx", decision_idx, dims="obs")
@@ -69,6 +91,33 @@ def fit_ordered_logit(
         )
 
         eta = alpha[decision_data] + beta[decision_data] * treatment_data
+
+        # M4: per-model baseline intercept + per-model treatment slope.
+        if has_model:
+            model_data = pm.Data("model_idx", model_idx, dims="obs")
+            sigma_model = pm.Exponential("sigma_model", lam=1)
+            g_model = pm.Deterministic(
+                "g_model", sigma_model * pm.Normal("g_model_raw", 0, 1, dims="model"),
+                dims="model",
+            )
+            sigma_tmodel = pm.Exponential("sigma_tmodel", lam=1)
+            t_model = pm.Deterministic(
+                "t_model", sigma_tmodel * pm.Normal("t_model_raw", 0, 1, dims="model"),
+                dims="model",
+            )
+            eta = eta + g_model[model_data] + treatment_data * t_model[model_data]
+
+        # M4: per-codebase baseline intercept.
+        if has_codebase:
+            codebase_data = pm.Data("codebase_idx", codebase_idx, dims="obs")
+            sigma_codebase = pm.Exponential("sigma_codebase", lam=1)
+            g_codebase = pm.Deterministic(
+                "g_codebase",
+                sigma_codebase * pm.Normal("g_codebase_raw", 0, 1, dims="codebase"),
+                dims="codebase",
+            )
+            eta = eta + g_codebase[codebase_data]
+
         pm.OrderedLogistic(
             "score", eta=eta, cutpoints=cutpoints, observed=y, dims="obs"
         )
@@ -190,4 +239,35 @@ def treatment_ranking(idata, coords) -> pd.DataFrame:
     summ.insert(0, "decision", coords["decision"])
     lo, hi = summ["hdi_3%"], summ["hdi_97%"]
     summ["effective"] = (lo > 0) | (hi < 0)
+    return summ.sort_values("mean", ascending=False).reset_index(drop=True)
+
+
+def variance_components(idata) -> pd.DataFrame:
+    """Group-level standard deviations (heterogeneity) with 94% HDI.
+
+    Always includes sigma_beta (treatment-effect spread across instructions, the
+    headline) and sigma_alpha (baseline spread). When the M4 terms are present,
+    also sigma_model / sigma_tmodel (model identity & responsiveness) and
+    sigma_codebase. Caveat: with few groups these are prior-influenced.
+    """
+    import arviz as az
+
+    names = [v for v in ("sigma_beta", "sigma_alpha", "sigma_model",
+                         "sigma_tmodel", "sigma_codebase")
+             if v in idata.posterior]
+    summ = az.summary(idata, var_names=names, hdi_prob=0.94)[["mean", "hdi_3%", "hdi_97%"]]
+    return summ.reset_index().rename(columns={"index": "component"})
+
+
+def model_treatment_slopes(idata, coords) -> pd.DataFrame:
+    """Per-model treatment slope t_model (how much each model retains when told),
+    94% HDI, ranked. `effective` = HDI excludes 0. Empty when the fit had a single
+    model level (M0 path)."""
+    import arviz as az
+
+    if "t_model" not in idata.posterior:
+        return pd.DataFrame()
+    summ = az.summary(idata, var_names=["t_model"], hdi_prob=0.94).reset_index(drop=True)
+    summ.insert(0, "model", coords["model"])
+    summ["effective"] = (summ["hdi_3%"] > 0) | (summ["hdi_97%"] < 0)
     return summ.sort_values("mean", ascending=False).reset_index(drop=True)

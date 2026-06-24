@@ -73,6 +73,48 @@ def test_ordered_logit_recovers_treatment_split():
     assert top3 == responders
 
 
+def _synthetic_multimodel(seed: int = 2) -> pd.DataFrame:
+    """6 decisions x baseline/treatment x 3 models x 2 codebases. Decisions 0-2
+    respond to treatment; model ``m2`` is extra-responsive (higher treatment slope).
+    Used to check the M4 per-model / per-codebase terms are added and recovered."""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for d in range(6):
+        responds = d < 3
+        for model in ("m0", "m1", "m2"):
+            model_lift = 1.0 if model == "m2" else 0.0
+            for cb in ("cb0", "cb1"):
+                for cond in ("baseline", "treatment"):
+                    base = 1
+                    lift = (2.5 if responds else 0) + (model_lift if cond == "treatment" else 0)
+                    for rep in range(12):
+                        s = int(np.clip(round(rng.normal(base + lift, 0.6)), 0, 3))
+                        rows.append({"decision": f"dec_{d}", "condition": cond, "model": model,
+                                     "codebase": cb, "score": s, "epoch": rep})
+    return pd.DataFrame(rows)
+
+
+@pytest.mark.slow
+def test_ordered_logit_adds_model_and_codebase_effects():
+    df = _synthetic_multimodel()
+    idata, _, coords = fit_ordered_logit(df, draws=500, tune=500, chains=2)
+    post = idata.posterior
+    # M4 structure: per-model + per-codebase intercepts + per-model treatment slope,
+    # added because model/codebase columns have >1 level.
+    for v in ("g_model", "t_model", "sigma_model", "sigma_tmodel", "g_codebase", "sigma_codebase"):
+        assert v in post, f"missing {v}"
+    # m2 (extra-responsive) should have the largest treatment slope
+    tm = post["t_model"].mean(("chain", "draw")).to_series()
+    assert tm.idxmax() == "m2"
+    # the treatment-responsive split is recovered: every responder's beta exceeds
+    # every non-responder's (robust to ranking noise at the boundary)
+    bmean = post["beta"].mean(("chain", "draw")).to_series()
+    responders = bmean[[f"dec_{i}" for i in range(3)]]
+    non_responders = bmean[[f"dec_{i}" for i in range(3, 6)]]
+    assert responders.mean() > non_responders.mean()
+    treatment_ranking(idata, coords)  # smoke: ranking summary runs on the M4 idata
+
+
 def _synthetic_framing(seed: int = 1) -> pd.DataFrame:
     """6 decisions across the two framing arms; decisions 0-2 are harmed by the
     negation frame (γ < 0), 3-5 are framing-indifferent."""

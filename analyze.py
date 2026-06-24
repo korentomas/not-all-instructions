@@ -26,7 +26,9 @@ from retention.analysis import (
     framing_effect,
     load_judge_scores,
     load_scores,
+    model_treatment_slopes,
     treatment_ranking,
+    variance_components,
 )
 from retention.dataset import CONDITIONS, FRAMING_CONDITIONS
 from retention.framing import flippable_decisions
@@ -91,6 +93,20 @@ def main() -> None:
         print("\nper-decision treatment effect β (ranked, 94% HDI):")
         print(ranking.to_string(index=False))
         ranking.to_csv(out / "treatment_ranking.csv", index=False)
+
+        # M4 group-level variance components (instruction vs model vs codebase)
+        vc = variance_components(idata)
+        print("\ngroup-level SDs (94% HDI) — heterogeneity by source:")
+        print(vc.to_string(index=False))
+        vc.to_csv(out / "variance_components.csv", index=False)
+
+        # M4 per-model treatment slopes (how much each model retains when told)
+        slopes = model_treatment_slopes(idata, coords)
+        if not slopes.empty:
+            print("\nper-model treatment slope t_model (ranked, 94% HDI):")
+            print(slopes.to_string(index=False))
+            slopes.to_csv(out / "model_treatment_slopes.csv", index=False)
+
         idata.to_netcdf(out / "retention_v2.nc")
         print(f"\nsaved trace → {out / 'retention_v2.nc'}")
 

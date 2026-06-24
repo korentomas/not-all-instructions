@@ -112,6 +112,10 @@ Writes to `analysis-out/`:
 - `kappa.csv`, quadratic-weighted checker-vs-judge agreement (per judge and panel median).
 - `treatment_ranking.csv`, the per-decision treatment effect with 94% HDI, ranked.
   `effective` flags the rules whose HDI excludes zero.
+- `variance_components.csv`, the group-level SDs with 94% HDI — heterogeneity by source
+  (instruction `sigma_beta`, and the M4 terms `sigma_model` / `sigma_tmodel` / `sigma_codebase`).
+- `model_treatment_slopes.csv`, the per-model treatment slope `t_model` (how much each model
+  retains when told), ranked; written when more than one model is present.
 - `retention_v2.nc`, the saved posterior trace.
 - `framing_effect.csv` (+ trace), the per-decision framing effect, when the framing
   logs are in the input.
@@ -134,8 +138,12 @@ paper is named for. The framing run comes back null (pooled mean 0.12, HDI
 [-0.22, 0.45]), so negation phrasing alone does not explain that backfire.
 
 The model in `src/retention/analysis/model.py` is a Bayesian hierarchical
-ordered-logistic fit with non-centered per-decision baseline and treatment effects,
-ported from the v1 PyMC analysis.
+ordered-logistic fit with non-centered per-decision baseline and treatment effects.
+When the logs span more than one model/codebase it also fits per-model and per-codebase
+baseline intercepts plus a per-model treatment slope (the "M4" spec): model exploration
+showed model identity explains as much variance as the instruction type, and that pooling
+it away (the old v1 spec) fits markedly worse. See `docs/bayes-model-exploration-v5.md`
+for the model comparison, validation, and prior-sensitivity caveat.
 
 ## Layout
 
