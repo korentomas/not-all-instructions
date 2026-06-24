@@ -35,3 +35,7 @@ analysis-out/
 *.snm
 *.fls
 *.fdb_latexmk
+
+# macOS
+.DS_Store
+**/.DS_Store
