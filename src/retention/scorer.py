@@ -61,20 +61,38 @@ def build_scored_text(completion: str, writes: list[dict]) -> str:
     return "\n".join(parts)
 
 
+_IMPORT_RE = re.compile(r"^\s*(?:import|from)\s+(\w+)", re.MULTILINE)
+
+
+def extract_imports(text: str) -> set[str]:
+    """Top-level module names imported anywhere in ``text``.
+
+    Used to build the ``already_imported`` context for ``dependencies_no_new``: the
+    union of imports across the files the model was shown (injected as fenced blocks
+    in the user messages). `from numpy import array` and `import os.path` both yield
+    the top-level module (`numpy`, `os`)."""
+    return set(_IMPORT_RE.findall(text or ""))
+
+
 def score_turn_outputs(
     turn_outputs: dict[int, str],
     test_turns: dict[int, list[str]],
+    already_imported: set[str] | None = None,
 ) -> tuple[dict[str, int], dict[str, str]]:
     """Pure scoring: run check_decision per (decision, test_turn) over the text.
 
     Returns (value, reasons) keyed by ``{decision_id}@{turn}``. Same logic the
     reference runner applied to ``response.content`` on test turns.
+
+    ``already_imported`` is the set of modules already present in the context the
+    model was given; it is forwarded to ``check_decision`` so ``dependencies_no_new``
+    does not count a re-shown existing import as new (None = no context = v1 behaviour).
     """
     value: dict[str, int] = {}
     reasons: dict[str, str] = {}
     for turn, text in turn_outputs.items():
         for decision_id in test_turns.get(turn, []):
-            r = check_decision(decision_id, text)
+            r = check_decision(decision_id, text, already_imported)
             key = f"{decision_id}@{turn}"
             value[key] = r.score
             reasons[key] = r.reason
@@ -140,7 +158,14 @@ def deterministic_compliance() -> Scorer:
     async def score(state: TaskState, target: Target) -> Score:
         turn_outputs = state.store.get("turn_outputs", {})
         test_turns = state.metadata["test_turns"]
-        value, reasons = score_turn_outputs(turn_outputs, test_turns)
+        # The "already imported" context = every module imported in the files the
+        # model was shown (injected as fenced blocks in the user messages). Built
+        # from state.messages so it is recoverable on offline re-score too.
+        already_imported: set[str] = set()
+        for m in state.messages:
+            if isinstance(m, ChatMessageUser):
+                already_imported |= extract_imports(m.text)
+        value, reasons = score_turn_outputs(turn_outputs, test_turns, already_imported)
         explanation = "\n".join(f"{k}: {v} ({reasons[k]})" for k, v in value.items())
         return Score(value=value, explanation=explanation)
 

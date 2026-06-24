@@ -88,4 +88,4 @@ def test_parametrize_v2_still_flags_real_duplication():
 
 
 def test_checkers_version_pinned():
-    assert CHECKERS_VERSION == "4"
+    assert CHECKERS_VERSION == "5"

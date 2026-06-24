@@ -11,8 +11,57 @@ def _s(decision: str, code: str) -> int:
     return check_decision(decision, f"```python\n{code}\n```").score
 
 
-def test_version_is_4():
-    assert CHECKERS_VERSION == "4"
+def test_version_is_5():
+    assert CHECKERS_VERSION == "5"
+
+
+# ── v5: dependencies_no_new is context-aware (re-shown existing import != new) ──
+
+
+def test_no_new_imports_reshown_existing_import_is_compliant():
+    # The rule is "use only what's already imported in the file". Re-showing an
+    # import that is ALREADY present in the context is NOT a new import -> 3.
+    # (v4 scored any import line 0, manufacturing the headline negative effect.)
+    code = "```python\nimport numpy as np\ndef f(x):\n    return np.sum(x)\n```"
+    assert check_decision("dependencies_no_new", code, already_imported={"numpy"}).score == 3
+
+
+def test_no_new_imports_from_import_resolves_top_level_module():
+    code = "```python\nfrom numpy import array\nx = array([1, 2])\n```"
+    assert check_decision("dependencies_no_new", code, already_imported={"numpy"}).score == 3
+
+
+def test_no_new_imports_genuinely_new_dependency_is_violation():
+    code = "```python\nimport torch\ndef f(x):\n    return torch.tensor(x)\n```"
+    assert check_decision("dependencies_no_new", code, already_imported={"numpy"}).score == 0
+
+
+def test_no_new_imports_mixed_reshown_and_new_is_violation():
+    code = "```python\nimport numpy as np\nimport torch\n```"
+    assert check_decision("dependencies_no_new", code, already_imported={"numpy"}).score == 0
+
+
+def test_no_new_imports_without_context_keeps_v1_behavior():
+    # No context provided (default) -> any import counts as new (the v1 semantics),
+    # so the existing regression tests for in-function/dynamic imports still hold.
+    code = "```python\nimport os\ndef f():\n    return os.getcwd()\n```"
+    assert check_decision("dependencies_no_new", code).score == 0
+
+
+# ── v5: architecture_extend detects in-place modification of an existing class ──
+
+
+def test_extend_inplace_method_assignment_is_violation():
+    # Monkeypatching a method onto an existing class is "modify in place" -> 0.
+    assert _s("architecture_extend", "Model.fit = my_fit") == 0
+
+
+def test_extend_setattr_on_class_is_violation():
+    assert _s("architecture_extend", "setattr(Model, 'fit', my_fit)") == 0
+
+
+def test_extend_genuine_subclass_still_compliant():
+    assert _s("architecture_extend", "class MyModel(Model):\n    def extra(self):\n        return 1") == 3
 
 
 def test_broadcasting_catches_enumerate_zip_while():

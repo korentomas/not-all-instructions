@@ -10,7 +10,38 @@ from inspect_ai.scorer import Score
 
 from retention.checkers import check_decision
 from retention.retention import instruction_retention
-from retention.scorer import build_scored_text, retention_mean, score_turn_outputs
+from retention.scorer import (
+    build_scored_text,
+    extract_imports,
+    retention_mean,
+    score_turn_outputs,
+)
+
+
+def test_extract_imports_returns_top_level_modules():
+    text = (
+        "--- File: a.py ---\n"
+        "```python\n"
+        "import numpy as np\n"
+        "from scipy import stats\n"
+        "import os.path\n"
+        "```"
+    )
+    assert extract_imports(text) == {"numpy", "scipy", "os"}
+
+
+def test_score_turn_outputs_threads_already_imported_context():
+    # deps_no_new is context-aware: re-showing an import present in the context
+    # the model was given is compliant (3); without context it falls back to the
+    # v1 behavior (any import = new = 0).
+    test_turns = {20: ["dependencies_no_new"]}
+    reshown = {20: "```python\nimport numpy as np\nx = np.sum(a)\n```"}
+
+    v_ctx, _ = score_turn_outputs(reshown, test_turns, already_imported={"numpy"})
+    assert v_ctx["dependencies_no_new@20"] == 3
+
+    v_noctx, _ = score_turn_outputs(reshown, test_turns)
+    assert v_noctx["dependencies_no_new@20"] == 0
 
 
 def test_retention_mean_reducer_excludes_sentinel():

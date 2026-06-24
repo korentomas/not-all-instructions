@@ -30,7 +30,13 @@ Message = Any
 # instead of a lenient 2/3; "context present, pattern absent" returns 0. Gate
 # no-code path 1 -> -1. parametrize detects class-method tests + usage-scoring;
 # module_constants magic = float / >=10 int only (was: any integer).
-CHECKERS_VERSION = "4"
+# v5: construct-validity fixes (audit 2026-06-24). dependencies_no_new is now
+# context-aware - "new" means a module NOT already imported in the files the model
+# was given (re-showing an existing import is compliant, not a violation); the
+# `already_imported` set is threaded in by the scorer. architecture_extend now
+# detects in-place modification of an existing class (monkeypatch / setattr) as the
+# violation, instead of crediting any subclass and never catching the real failure.
+CHECKERS_VERSION = "5"
 
 
 @dataclass
@@ -434,9 +440,16 @@ def check_safety_v2(text: str, system_prompt: str, tool_calls: list | None, judg
 # ── v3 checkers: decision compliance ──
 
 
-def check_decision(decision_id: str, text: str) -> ComplianceResult:
+def check_decision(
+    decision_id: str, text: str, already_imported: set[str] | None = None
+) -> ComplianceResult:
     """Check if generated code follows a planted decision.
-    Deterministic - parses code content. No LLM judge."""
+    Deterministic - parses code content. No LLM judge.
+
+    ``already_imported`` (v5): the set of top-level modules already imported in the
+    files/context the model was given. Only ``dependencies_no_new`` uses it - a
+    module re-shown from that set is not a "new" import. ``None`` means no context
+    is available, in which case any import counts as new (the v1 behaviour)."""
 
     # Extract code blocks from response
     code_blocks = re.findall(r"```(?:\w*)\n([\s\S]*?)```", text)
@@ -451,6 +464,9 @@ def check_decision(decision_id: str, text: str) -> ComplianceResult:
             score=-1,
             reason="No code in response - cannot evaluate decision compliance (abstain)",
         )
+
+    if decision_id == "dependencies_no_new":
+        return _check_no_new_imports(code, already_imported)
 
     checkers = {
         "code_style_broadcasting": _check_broadcasting,
@@ -513,17 +529,32 @@ def _check_listcomp(code: str) -> ComplianceResult:
 
 
 def _check_extend_not_modify(code: str) -> ComplianceResult:
+    """POSITIVE rule: "extend an existing class via a subclass, don't modify it in
+    place". v5 fix (audit 2026-06-24): v4 credited ANY subclass with 3 and never
+    detected the actual violation (modifying a base class in place), so the rule was
+    construct-invalid. We now flag in-place modification of an existing class -
+    monkeypatching a method (`ExistingClass.method = ...`) or `setattr(Class, ...)` -
+    as the violation (0). An owner whose name is Capitalized is treated as a class
+    (heuristic), which avoids flagging instance attributes like `self.x = ...`."""
+    # In-place modification of an existing class: monkeypatch (`Cls.attr = ...`) or
+    # setattr on a class. Checked first - it is the violation the rule targets.
+    has_inplace = bool(
+        re.search(r"^\s*[A-Z]\w*\.\w+\s*=(?!=)", code, re.MULTILINE)
+        or re.search(r"setattr\s*\(\s*[A-Z]\w*\s*,", code)
+    )
     has_subclass = bool(re.search(r"class\s+\w+\([^)]+\):", code))
     # A class with no base list (`class Foo:` / `class Foo():`) is a from-scratch
     # definition, not an extension of an existing class.
     has_class = bool(re.search(r"class\s+\w+", code))
-    if has_subclass:
+    if has_inplace:
+        return ComplianceResult("decision:architecture_extend", 0, "Modifies an existing class in place (monkeypatch/setattr)")
+    elif has_subclass:
         return ComplianceResult("decision:architecture_extend", 3, "Creates a subclass")
     elif has_class:
         # Relevant context (a class is defined) but the compliant pattern (extending
         # via subclassing) is absent - real violation.
         return ComplianceResult("decision:architecture_extend", 0, "Defines a class without extending a base")
-    # No class at all: no opportunity to extend-vs-modify - abstain.
+    # No class at all and no in-place modification: no opportunity to extend-vs-modify - abstain.
     return ComplianceResult("decision:architecture_extend", -1, "No class definition - can't evaluate (abstain)")
 
 
@@ -673,21 +704,40 @@ def _check_snake_no_abbrev(code: str) -> ComplianceResult:
     return ComplianceResult("decision:naming_snake_no_abbrev", 3, "Snake case, no abbreviations")
 
 
-def _check_no_new_imports(code: str) -> ComplianceResult:
-    """NEGATIVE rule: don't introduce new imports/dependencies. An import statement in
-    the response snippet IS the new dependency (v1 semantics) -> 0. Absence of any
-    import is compliant -> 3, but only when there is actual code to inspect; empty /
-    no-code input has nothing to credit -> abstain (-1)."""
+def _check_no_new_imports(
+    code: str, already_imported: set[str] | None = None
+) -> ComplianceResult:
+    """NEGATIVE rule: "use only what's already imported in the file" - don't introduce
+    a NEW import. An import is "new" only if its top-level module is NOT already in the
+    context the model was given (``already_imported``); re-showing an existing import is
+    compliant. With no context (``None``) any import counts as new (v1 behaviour).
+    Absence of any import is compliant -> 3 (when there is code to inspect); empty /
+    no-code input has nothing to credit -> abstain (-1).
+
+    v5 fix (audit 2026-06-24): v4 scored ANY import line 0, so a model that wrote
+    compliant code but re-showed `import numpy as np` (numpy already in the file) was
+    counted as a violation. That conflated good practice (showing imports) with the
+    rule, and may have manufactured the headline negative treatment effect, since
+    being told "don't add imports" plausibly makes a model echo imports more."""
     if not code.strip():
         return ComplianceResult("decision:dependencies_no_new", -1, "No code to evaluate (abstain)")
 
+    avail = already_imported or frozenset()
     # v3: `^\s*` so indented (function-body) imports count too; also dynamic imports.
     imports = re.findall(r"^\s*(?:import|from)\s+(\w+)", code, re.MULTILINE)
+    new = [m for m in imports if m not in avail]
+    # A dynamic import cannot be resolved against the context, so it is always "new".
     if re.search(r"__import__\s*\(|importlib\.import_module", code):
-        imports.append("<dynamic>")
-    if not imports:
+        new.append("<dynamic>")
+
+    if not imports and not new:
         return ComplianceResult("decision:dependencies_no_new", 3, "No new imports")
-    return ComplianceResult("decision:dependencies_no_new", 0, f"New imports: {imports}")
+    if not new:
+        return ComplianceResult(
+            "decision:dependencies_no_new", 3,
+            f"Only re-shows already-imported modules: {sorted(set(imports))}",
+        )
+    return ComplianceResult("decision:dependencies_no_new", 0, f"New imports: {sorted(set(new))}")
 
 
 def _check_module_constants(code: str) -> ComplianceResult:
