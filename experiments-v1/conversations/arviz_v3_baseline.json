@@ -1,0 +1,247 @@
+{
+  "codebase": "arviz",
+  "repo_path": "codebases/arviz-stats",
+  "condition": "baseline",
+  "task_description": "Add custom convergence diagnostics with weighted R-hat and bulk/tail ESS normalization to ArviZ stats",
+  "planted_decisions": [],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "src/arviz_stats/base/diagnostics.py"
+      ],
+      "content": "I'm working on the ArviZ stats library. We need to add custom convergence diagnostics with weighted R-hat and bulk/tail ESS normalization. Start by reading the base diagnostics module."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "src/arviz_stats/base/array.py"
+      ],
+      "content": "Read the base array module to see the existing array operations and utilities."
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "src/arviz_stats/summary.py"
+      ],
+      "content": "Read the summary module to understand how diagnostics are aggregated and displayed."
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/base/test_array.py"
+      ],
+      "content": "Read the test_array.py to see the existing test patterns for the stats base module."
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "src/arviz_stats/base/dataarray.py"
+      ],
+      "content": "Read the dataarray module to understand how ArviZ wraps statistical computations on xarray DataArrays."
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "src/arviz_stats/loo/helper_loo.py"
+      ],
+      "content": "Read the LOO helper module -- it has patterns for complex statistical computations we can learn from."
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "src/arviz_stats/base/density.py"
+      ],
+      "content": "Read the density estimation module -- we may need kernel density estimation for some of our diagnostic visualizations."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "src/arviz_stats/sampling_diagnostics.py"
+      ],
+      "content": "Read the sampling diagnostics module to see how existing diagnostic functions are structured."
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_moment_match.py"
+      ],
+      "content": "Read the LOO moment matching module to understand how ArviZ handles iterative statistical computations."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "src/arviz_stats/metrics.py"
+      ],
+      "content": "Read the metrics module to see what model comparison metrics are already implemented."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "src/arviz_stats/loo/compare.py"
+      ],
+      "content": "Read the LOO compare module to understand how model comparison results are structured."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_subsample.py"
+      ],
+      "content": "Read the LOO subsample module for understanding how ArviZ handles subsampling in large datasets."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "src/arviz_stats/visualization.py"
+      ],
+      "content": "Read the visualization module to understand how diagnostic results are formatted for plotting."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "src/arviz_stats/base/core.py"
+      ],
+      "content": "Read the base core module to see the fundamental statistical operations available."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "src/arviz_stats/accessors.py"
+      ],
+      "content": "Let's continue. Read the accessors module to understand ArviZ's accessor pattern."
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "tests/loo/test_helper_loo.py"
+      ],
+      "content": "Read the LOO test helper file to see how complex statistical tests are structured."
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_expectations.py"
+      ],
+      "content": "Read the LOO expectations module."
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "src/arviz_stats/loo/loo.py"
+      ],
+      "content": "Read the main LOO module to understand the full LOO computation pipeline."
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "src/arviz_stats/ecdf_utils.py"
+      ],
+      "content": "Read the ECDF utils module."
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "tests/conftest.py"
+      ],
+      "content": "Read the test conftest to understand the testing infrastructure and fixtures."
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of R-hat diagnostic values across multiple chains. It should take a 2D array where rows are parameters and columns are chain splits, and return per-parameter normalized diagnostics in [0, 1]. Handle edge cases like chains with zero variance.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted effective sample sizes. The function should accept per-draw importance weights and compute a weighted ESS that accounts for weight variability. Make sure it integrates with the existing diagnostics interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the R-hat normalization function. Cover standard convergence scenarios, edge cases (single chain, single parameter, constant chains, NaN values), and verify numerical accuracy of the results.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate the shape and contents of MCMC chain arrays before computing diagnostics. It should check dimensionality, minimum chain length, and that values are finite. Raise informative errors for each failure mode.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted ESS computation: zero weights, negative weights, single-draw chains, and missing values. Use error types consistent with what ArviZ already uses.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main diagnostic computation function that takes raw MCMC chains, normalizes R-hat values, computes weighted ESS, and returns a structured diagnostic summary. Include a complete docstring. The function should parse chain metadata from a string pattern like 'chain[0]:param_name' to identify parameters.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+name: bayesian-retention
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pymc=5.28.3
+  - nutpie
+  - arviz>=0.19,<1.0
+  - preliz
+  - jupyter
+  - ipykernel
+  - matplotlib
+  - pandas
+  - scipy

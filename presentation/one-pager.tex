@@ -1,0 +1,143 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{tabularx}
+
+% Sections
+\titleformat{\section}{\large\bfseries}{}{0em}{}
+\titlespacing*{\section}{0pt}{2ex}{1ex}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titlespacing*{\subsection}{0pt}{1.5ex}{0.8ex}
+
+% Lists
+\setlist{leftmargin=1.5em, itemsep=3pt, parsep=0pt}
+
+\pagestyle{empty}
+
+\begin{document}
+
+% ── Header ────────────────────────────────────────────────────
+\begin{center}
+{\Large \textbf{\begin{tabular}{@{}c@{}}
+Refuerzo Selectivo de Instrucciones:\\[0.2em]
+Tracking Bayesiano de Compliance\\[0.2em]
+para Mantenimiento de Guardrails en LLMs
+\end{tabular}}}
+
+\vspace{0.8em}
+{\normalsize Tomas Korenblit}
+
+\vspace{0.4em}
+{\small Ciencia de Datos $\cdot$ 1C2026\\
+Docentes: Agust\'in Moro, Rodrigo D\'iaz, Florencia Piney\-r\'ua}
+\end{center}
+
+\vspace{0.8em}
+\hrule
+\vspace{1em}
+
+% ── Body ──────────────────────────────────────────────────────
+
+\section{Problema: Context Rot}
+
+Los LLMs dejan de seguir sus propias instrucciones a medida que la conversaci\'on se alarga. Chroma Research (2025) lo midi\'o en 18 modelos frontera y el patr\'on se repite en todos: 39\% de ca\'ida en tareas multi-turn (Laban et al., 2025), accuracy que baja de 87.7\% a 70.7\% en solo 3 turnos (He et al., 2024), y adherencia que se acerca a cero conforme se agregan reglas al system prompt (Mu et al., 2025). Hasta 25K caracteres de \emph{whitespace} (sin contenido sem\'antico) causan degradaci\'on medible (Du et al., 2025).
+
+Este mes Anthropic habilit\'o la ventana de contexto de 1M de tokens en Claude Opus 4.6 y Sonnet 4.6, sin costo adicional por contexto largo. Cuando Liu et al.\ escribieron \emph{Lost in the Middle} en 2023, 16K era un contexto grande. Los mecanismos de degradaci\'on (diluci\'on de atenci\'on, sesgo posicional) escalan con la longitud del contexto, no mejoran. El costo de re-inyectar todo el prompt cada turno a 1M tokens es mucho mayor que a 16K. Comparar los m\'etodos actuales, dise\~nados para ventanas de 16K--128K, contra contextos de 1M ser\'ia en s\'i mismo una contribuci\'on interesante.
+
+\subsection{Mecanismos de degradaci\'on}
+
+\begin{enumerate}
+    \item Diluci\'on de atenci\'on: softmax distribuye masa entre m\'as tokens, cada uno recibe menos
+    \item Sesgo posicional: lo que est\'a en el medio del contexto se pierde (la ``curva U'' de Liu et al.)
+    \item Olvido directo: $\sim$20\% de instrucciones seguidas se abandonan en 3 turnos
+    \item Compromiso prematuro: si el modelo se equivoca temprano, no se recupera
+    \item Saturaci\'on: a m\'as reglas en el prompt, menor adherencia global
+\end{enumerate}
+
+\section{Soluciones Actuales}
+
+{\centering
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Estrategia} & \textbf{Limitaci\'on} \\
+\midrule
+Repetir todo cada turno & Saturaci\'on de guardrails \\
+Repetici\'on na\"ive del prompt & 2$\times$ costo en tokens (Google, 2025) \\
+No hacer nada & 39\% ca\'ida documentada \\
+Re-inyectar al compactar & Ignora decay gradual entre compactaciones \\
+Jerarqu\'ia de prioridad & No aborda decaimiento gradual (OpenAI, 2024) \\
+\bottomrule
+\end{tabular}\par}
+
+Ninguno de estos enfoques decide \emph{qu\'e} reforzar ni \emph{cu\'ando}.
+
+\section{Gap de Investigaci\'on}
+
+{\centering
+\begin{tabular}{@{} l c @{}}
+\toprule
+\textbf{Componente} & \textbf{¿Existe?} \\
+\midrule
+LLMs olvidan mediblemente ($\gamma < 1$) & S\'i \\
+Repetici\'on del prompt ayuda emp\'iricamente & S\'i \\
+Olvido modelable como filtro Bayesiano & S\'i \\
+\midrule
+BKT para compliance de LLMs & \textbf{No} \\
+Re-inyecci\'on basada en incertidumbre & \textbf{No} \\
+Curvas de olvido por tipo de instrucci\'on & \textbf{No} \\
+Refuerzo selectivo bajo presupuesto de tokens & \textbf{No} \\
+\bottomrule
+\end{tabular}\par}
+
+\section{Propuesta}
+
+La idea es mantener, para cada instrucci\'on del system prompt, una estimaci\'on de qu\'e tan probable es que el modelo la siga cumpliendo. Se\~nales como ``¿us\'o la herramienta correcta?'' o ``¿respet\'o el formato?'' actualizan esa estimaci\'on turno a turno, y entre turnos la probabilidad decae naturalmente.
+
+Formalmente, para cada instrucci\'on $i$ en el turno $t$:
+
+\[
+P(C_i \mid \mathcal{O}_{1:t}) =
+    \frac{P(\mathcal{O}_t \mid C_i) \cdot P(C_i \mid \mathcal{O}_{1:t-1})}
+         {P(\mathcal{O}_t)}
+\]
+
+donde $C_i$ es compliance y $\gamma < 1$ controla el decaimiento entre turnos. Dado un presupuesto fijo de $B$ tokens, se refuerzan solo las instrucciones con menor $P(C_i)$.
+
+\subsection{¿Por qu\'e Bayesiano?}
+
+Un clasificador binario dice ``cumple'' o ``no cumple''. El approach Bayesiano da una probabilidad continua, acepta priors sobre tasas de decaimiento por tipo de instrucci\'on, y se actualiza con cada observaci\'on. Eso es lo que hace falta para decidir d\'onde gastar tokens de refuerzo cuando hay un presupuesto limitado.
+
+\section{Pregunta de Investigaci\'on}
+
+\emph{¿Tienen los distintos tipos de instrucciones tasas de decaimiento mediblemente distintas? Y si las tienen, ¿puede un tracker Bayesiano explotar esas diferencias para mantener compliance equivalente a menor costo de tokens?}
+
+\vspace{0.5em}
+Hay un \'angulo de seguridad importante: si los guardrails de seguridad decaen m\'as r\'apido que los de formato, los reminders uniformes est\'an sub-invirtiendo en lo que m\'as importa.
+
+\section{Referencias Clave}
+
+{\centering
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Paper} & \textbf{Aporte} \\
+\midrule
+Liu et al., 2023 & Lost in the Middle (curva U) \\
+He et al., 2024 & Multi-IF, Instruction Forgetting Ratio \\
+Mu et al., 2025 & Saturaci\'on de guardrails \\
+Chroma, 2025 & Context rot en 18 modelos frontera \\
+Zhang \& Yang, 2025 & LLMs como filtros Bayesianos descontados \\
+Google, 2025 & Prompt repetition como baseline \\
+Dongre et al., 2025 & Drift acotado, reminders funcionan \\
+\bottomrule
+\end{tabular}\par}
+
+Corpus completo: 19 papers (2023--2026). 14 de 2025+.
+
+\end{document}

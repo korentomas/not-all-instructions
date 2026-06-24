@@ -1,0 +1,72 @@
+% !TEX program = xelatex
+\documentclass[10pt]{article}
+\usepackage[a4paper, margin=1.2cm]{geometry}
+\usepackage{fontspec}
+\usepackage{multicol}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{leading}
+
+\titleformat{\section}{\bfseries\footnotesize}{}{0em}{}
+\titlespacing*{\section}{0pt}{0.4em}{0.1em}
+
+\setlength{\columnsep}{1em}
+\setlength{\parskip}{0.15em}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\footnotesize\bfseries GUIÓN — Cuando la IA Olvida lo que le Pediste}
+\end{center}
+
+\vspace{-0.5em}
+
+\begin{multicols}{2}
+\footnotesize
+\leading{10pt}
+
+\section{Hook}
+Est\'as usando ChatGPT. Le explic\'as tu proyecto, le ped\'is que siga ciertas reglas, y funciona b\'arbaro. Van y vienen mensajes. Todo bien. \textbf{[pausa]} Hasta que en el mensaje 15\ldots\ te responde cualquier cosa. Como si nunca le hubieras dicho nada. \textbf{[pausa]} ¿Qu\'e pas\'o?
+
+\section{M\'aquina de Predicci\'on}
+Para entender por qu\'e pasa esto, necesitamos entender un poco c\'omo funciona un LLM por dentro. Un Large Language Model no ``entiende'' nada. Es una m\'aquina de predicci\'on de texto: dado todo lo anterior, predice qu\'e palabra viene despu\'es. Pero esa predicci\'on es mucho m\'as sofisticada de lo que parece. El a\~no pasado, Anthropic --- la empresa detr\'as de Claude --- le hizo reverse engineering a uno de sus modelos y public\'o lo que encontr\'o adentro. Y es fascinante. Primero: no procesa paso a paso como har\'iamos nosotros. Eval\'ua m\'ultiples caminos en paralelo y ``vota'' entre ellos. Segundo: planifica hacia adelante. Puede elegir una palabra que va a decir al final de una oraci\'on antes de escribir el principio de esa oraci\'on. ¿C\'omo lo hace? Con circuitos internos.
+
+\section{Circuitos Internos}
+Esta imagen viene del paper de Anthropic. Es un ejemplo real de c\'omo razona el modelo. Le pregunt\'as: ``¿Cu\'al es la capital del estado donde est\'a Dallas?'' Y el modelo no busca la respuesta directamente. Encadena representaciones internas: activa ``Dallas'', eso activa ``Texas'', eso se combina con ``capital'', y llega a ``Austin''. Cada uno de estos nodos es lo que en interpretabilidad llaman un feature --- una representaci\'on interna, no confundir con feature de un dataset.
+
+\section{Atenci\'on}
+Para generar cada palabra, el modelo tiene que decidir a qu\'e parte de todo el texto prestarle atenci\'on. Esto se llama, literalmente, el mecanismo de atenci\'on. Cuando el contexto es corto esto funciona bien. Pero la atenci\'on es un recurso finito. Se reparte entre todos los tokens del contexto. Y cuando el contexto crece, las instrucciones que le diste al principio tienen que competir con todo lo que vino despu\'es. ¿Qu\'e pasa cuando hay un mill\'on de tokens compitiendo por atenci\'on?
+
+\section{Ventana de Contexto}
+Un token es la unidad m\'inima que procesa el modelo. Una palabra es m\'as o menos uno o dos tokens. Una p\'agina son unos 500 tokens. La ventana de contexto es todo lo que el modelo puede ``ver'' al responder: el system prompt, toda la conversaci\'on, los archivos adjuntos. Si algo no est\'a en la ventana, el modelo no lo sabe. No tiene memoria aparte. En 2023, la ventana m\'as grande era de 16 mil tokens. Hoy estamos en un mill\'on. Eso es dos mil p\'aginas. M\'as ventana deber\'ia ser mejor, ¿no?
+
+\section{System Prompt y Guardrails}
+El system prompt son las instrucciones que recibe el modelo antes de hablar con el usuario. Cosas como: ``respond\'e en espa\~nol'', ``sos un tutor amable'', ``no generes contenido da\~nino'', ``us\'a tal herramienta para tal tarea''. A las instrucciones de seguridad les decimos guardrails. Y ac\'a hay algo importante: los guardrails no son un m\'odulo especial. El modelo no tiene un bot\'on de ``seguridad''. Son instrucciones como cualquier otra. La seguridad es un pathway --- un camino de activaciones. No es un interruptor.
+
+\section{La Evidencia}
+Laban y colegas en 2025 midieron una ca\'ida del 39\% en tareas conversacionales de varios turnos. El equipo de Meta con Multi-IF mostr\'o que la precisi\'on baja de 87.7\% a 70.7\% en solo 3 turnos. Chroma Research teste\'o 18 modelos frontera --- y los 18 muestran el mismo patr\'on. Y Mu y colegas mostraron que cuando le pon\'es m\'as de 50 reglas al system prompt, la adherencia se acerca a cero. No es un bug de un modelo. Le pasa a todos.
+
+\section{La Curva U}
+¿Y por qu\'e pasa? En parte lo explica ``Lost in the Middle'' de Liu et al. Cuando med\'is la precisi\'on seg\'un d\'onde est\'a la informaci\'on en el contexto, aparece una curva U. Lo del principio lo atiende bien. Lo del final, tambi\'en. Pero lo del medio se pierde. Esto se midi\'o en tareas de recuperaci\'on, no directamente en instrucciones. Pero sugiere que la atenci\'on no es uniforme.
+
+\section{¿Por qu\'e importa?}
+Plata: las empresas procesan miles de millones de tokens por d\'ia. Cada token de reminder cuesta. Refuerzo ineficiente a esa escala es mucha plata. Seguridad: nuestra hip\'otesis es que los guardrails podr\'ian decaer m\'as r\'apido que las instrucciones de formato. Si es as\'i, los reminders uniformes sub-invierten en seguridad. Ejemplo: le ped\'is que solo cite fuentes reales. 10 turnos despu\'es, te inventa un paper que no existe.
+
+\section{¿Qu\'e se Hace Hoy?}
+Repetir todo cada turno: satura. Duplicar el prompt: 2$\times$ costo. No hacer nada: 39\% de ca\'ida. Jerarqu\'ia de prioridad: no aborda el decaimiento gradual. Ninguna es adaptativa. Ninguna decide qu\'e reforzar ni cu\'ando.
+
+\section{La Pregunta Clave}
+Si sabemos que el modelo olvida\ldots\ y sospechamos que cada instrucci\'on decae distinto\ldots\ ¿por qu\'e reforzamos todo por igual? \textbf{[pausa]} ¿Y si pudi\'eramos reforzar solo lo que se est\'a por olvidar?
+
+\section{Bayesiano vs Cl\'asico}
+El enfoque cl\'asico es binario. ¿Cumple? S\'i o no. No distingue entre 90\% y 51\%. El enfoque bayesiano: mantenemos un posterior para cada instrucci\'on. Cada observaci\'on actualiza la estimaci\'on --- verosimilitud por prior. Entre turnos, el posterior decae. Podemos anticipar el olvido antes de que pase.
+
+\section{BKT}
+Bayesian Knowledge Tracing se usa hace 30 a\~nos en educaci\'on. Estima la probabilidad de que un estudiante domine un concepto, turno a turno. La inversi\'on conceptual: ¿qu\'e pasa si el ``estudiante'' es el LLM y los ``conceptos'' son sus instrucciones?
+
+\section{Modelando el Olvido}
+Para cada instrucci\'on $i$ en el turno $t$, la probabilidad de que siga siendo cumplida es un Bayes update cl\'asico. $\gamma < 1$ controla cu\'anto decae entre turnos. Si ten\'es un presupuesto fijo de $B$ tokens para reminders, reforz\'as solo las instrucciones con menor probabilidad de compliance. Nadie aplic\'o BKT a compliance de LLMs, ni midi\'o curvas de olvido por tipo de instrucci\'on, ni optimiz\'o qu\'e reforzar con un presupuesto limitado de tokens. Eso es lo que propongo investigar.
+
+\end{multicols}
+\end{document}

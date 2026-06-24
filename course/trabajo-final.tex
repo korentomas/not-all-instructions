@@ -1,0 +1,463 @@
+% Trabajo Final Individual — Ciencia de Datos 1C2026
+% Formato pedido: Times New Roman 12, interlineado 1,5, márgenes normales, 6–8 páginas, APA.
+% Motor: pdflatex
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{newtxtext,newtxmath} % Times New Roman
+\usepackage[margin=1in]{geometry} % márgenes normales
+\usepackage{setspace}
+\onehalfspacing % interlineado 1,5
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{multicol}
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{1A5FB4}
+\usepackage[authoryear,round]{natbib}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=linkblue]{hyperref}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{0.5em}{0.2em}
+\titlespacing*{\subsection}{0pt}{0.4em}{0.15em}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{1.4em}
+\graphicspath{{experiments/analysis/figures/}{paper/figures/}}
+
+\title{\vspace{-2.2em}\bfseries No todas las instrucciones se olvidan igual:\\
+medición de la retención por tipo de instrucción\\ en asistentes de programación con LLMs}
+\author{Tomás Pablo Korenblit\thanks{Una versión de este trabajo fue aceptada en el simposio ASAID, 55.\textsuperscript{as}~JAIIO (2026).}}
+\date{Ciencia de Datos --- 1.\textsuperscript{er} cuatrimestre 2026}
+
+\begin{document}
+\maketitle
+\vspace{-1.8em}
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\small
+\noindent\textbf{Resumen.} Los modelos de lenguaje grandes (LLMs) pierden
+adherencia a las instrucciones a medida que la conversación se extiende. La
+literatura mide ese fenómeno, pero siempre de forma agregada: informa una caída
+promedio de cumplimiento agregando todas las instrucciones. Este trabajo aborda
+una pregunta que esa literatura deja abierta: ¿decaen todas las instrucciones por
+igual, o algunas se retienen y otras no? Para responder esto, construí un banco de
+pruebas que planta doce preferencias de código como pedidos del usuario en
+conversaciones sobre bases de código y mide si el modelo las respeta al final.
+Sobre esas observaciones ajusté un modelo bayesiano con efectos jerárquicos por
+tipo de decisión. El resultado principal es que la retención varía mucho entre
+tipos de instrucción: los efectos del tratamiento cambian en más de un orden de
+magnitud ($\sigma_\beta = 2{,}11$). Tres de doce instrucciones se benefician del
+refuerzo (dos de ellas de forma robusta entre modelos), una empeora cuando se la
+refuerza y ocho no requieren intervención, de modo que el refuerzo uniforme
+malgasta la mayor parte del presupuesto. Esa heterogeneidad es lo que un sistema
+de refuerzo selectivo necesitaría explotar.
+
+\vspace{0.3em}
+\noindent\textbf{Palabras clave:} cumplimiento de instrucciones; context rot;
+inferencia bayesiana; refuerzo selectivo; evaluación de LLMs.
+\end{minipage}
+\end{center}
+
+\vspace{0.5em}
+
+\section{Introducción}
+
+Cuando alguien usa un asistente conversacional como ChatGPT o Claude, la
+experiencia inicial suele ser buena: explica su proyecto, pide que se respeten
+ciertas reglas y el modelo obedece. Sin embargo, a medida que la conversación se
+extiende, en algún momento el modelo deja de respetar lo que se le pidió: sigue
+respondiendo, pero como si nunca hubiera recibido esas instrucciones. A este
+fenómeno se lo denomina \emph{context rot}: la pérdida de adherencia a las
+instrucciones conforme crece el contexto. El término abarca también fallas de
+recuperación y razonamiento; acá lo uso en su acepción restringida a la adherencia
+a instrucciones.
+
+No se trata del defecto de un modelo particular; le pasa a todos, y las causas son
+arquitectónicas. Una es la dilución de la atención: para generar cada token, un
+LLM decide a qué partes del contexto asignarles más peso mediante un mecanismo de
+atención que es un recurso finito que se reparte entre todos los tokens. Cuando el
+contexto crece (las ventanas pasaron de decenas de miles de tokens en 2023 a un
+millón desde principios de 2024, aproximadamente dos mil páginas), las
+instrucciones del comienzo compiten por atención con todo lo posterior. Otra es el
+sesgo posicional: la información del medio del contexto pesa menos que la de los
+extremos \citep{liu2024}. La degradación, además, no aparece solo cerca del límite
+de la ventana: se observa en todos los largos de contexto.
+
+El problema importa por dos razones. Una es económica: las mitigaciones existentes
+consisten en re-inyectar las instrucciones en cada turno, y eso multiplica el
+costo en tokens a escala de miles de millones por día. El otro es la seguridad:
+los \emph{guardrails} implementados a nivel de prompt (las reglas que impiden que
+el modelo produzca contenido dañino) son instrucciones como cualquier otra, y se
+sabe que los contextos largos aumentan sistemáticamente la tasa de jailbreak
+\citep{anil2024}. Si decaen, el sistema no emite ningún error: falla en silencio.
+Este trabajo aporta una estimación del efecto de tratamiento por tipo de
+instrucción ---con un modelo jerárquico que cuantifica la heterogeneidad de la
+retención--- y la justificación que esa medición ofrece para una estrategia de
+refuerzo selectivo.
+
+\section{Contexto y definición del problema}
+
+Que los LLMs olvidan ya está documentado; lo que el trabajo busca entender es
+\emph{cómo} lo hacen. La literatura informa métricas agregadas: un cumplimiento
+medio que cae de un valor a otro. Pero un promedio oculta su estructura interna.
+Si cada instrucción decae a un ritmo distinto, el promedio mezcla instrucciones
+que el modelo retiene perfecto con otras que ignora.
+
+Esa distinción determina qué estrategia de mitigación tiene sentido. Una
+instrucción que el modelo ya cumple por defecto no necesita recordatorio; una que
+empeora al repetirse no debería reforzarse jamás. Sin saber a qué tipo pertenece
+cada una, toda política de refuerzo opera a ciegas. De aquí surge la pregunta que
+guía el trabajo: \emph{¿la retención de instrucciones es homogénea o heterogénea
+entre tipos de instrucción?} Si fuera homogénea, reforzar todo por igual bastaría;
+si fuera heterogénea, hay que reforzar selectivamente, y para eso primero hay que
+medirla.
+
+\section{Revisión de la literatura}
+
+Agrupo la literatura en cuatro bloques, según la función que cumplen en el
+argumento.
+
+\paragraph{Medición del olvido.} \citet{laban2025} compararon el mismo modelo con
+toda la información de una vez frente a la misma tarea fragmentada en turnos, sobre
+quince modelos, y hallaron una caída promedio del 39\% en el escenario multi-turno. Un detalle relevante: la \emph{aptitud} del modelo baja
+poco, mientras que la inestabilidad sube mucho; lo que se degrada no es tanto la
+capacidad como la fiabilidad. \citet{he2024}, en Meta, definieron el
+\emph{Instruction Forgetting Ratio} y mostraron que la precisión de o1-preview cae
+de 87,7\% a 70,7\% en tres turnos. \citet{du2025} agregaron que ampliar la ventana
+de contexto no resuelve la degradación. Los tres informan promedios, pero ninguno
+estima efectos por instrucción ni propone una política de refuerzo.
+
+\paragraph{Mecanismo: posición y saturación.} \citet{liu2024} identificaron una
+curva en forma de U (\emph{lost in the middle}): la información ubicada al comienzo
+y al final pesa más que la del medio. Por eso las del system prompt (posición
+cero) resisten mejor que las preferencias de mitad de conversación. \citet{mu2025}
+describieron un efecto distinto, de saturación: al acumular reglas (de 1 a 20 en su
+prueba), la adherencia a cada una cae marcadamente. Uno es de posición; el otro, de
+cantidad, y juntos muestran que la adherencia no decae de modo uniforme sino
+estructurado.
+
+\paragraph{Implicaciones de seguridad.} \citet{anil2024} midieron empíricamente
+que la tasa de \emph{jailbreak} aumenta de forma sistemática con la cantidad de
+ejemplos previos en el contexto (\emph{many-shot jailbreaking}): cuanto más largo,
+más vulnerable. \citet{rivasseau2025} aportó la formalización (el cociente entre
+los tokens del system prompt y el contexto total tiende a cero a medida que la
+conversación crece) y propuso interrupciones periódicas, aún sin evaluación
+empírica.
+
+\paragraph{Modelos bayesianos del comportamiento.} \citet{zhang2025} mostraron que
+los LLM se comportan como filtros bayesianos descontados, con un factor
+$\gamma<1$: el prior pierde peso frente a las observaciones recientes. Esto conecta
+con \citet{laban2025}: una varianza que explota es justo lo que produce un
+posterior inestable. En educación, el \emph{Bayesian Knowledge Tracing}
+\citep{corbett1994} estima desde hace tres décadas, turno a turno, la probabilidad
+de que un estudiante domine un concepto. La inversión conceptual que propongo es
+tratar al LLM como el ``estudiante'' y a sus instrucciones como los ``conceptos''.
+
+\section{Comparación de enfoques}
+
+Las estrategias actuales comparten un mismo límite (Tabla~\ref{tab:mitig}).
+
+\begin{table}[h]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.15}
+  \caption{Estrategias de mitigación del \emph{context rot}.}
+  \label{tab:mitig}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}p{4.2cm} >{\raggedright\arraybackslash}p{2.15cm} >{\raggedright\arraybackslash}p{3.05cm}@{}}
+    \toprule
+    \textbf{Enfoque} & \textbf{Idea} & \textbf{Costo} & \textbf{Límite} \\
+    \midrule
+    Repetir el prompt & Re-inyectar todas las reglas cada turno & $N\times$ entrada & Saturación: más reglas pueden empeorar \citep{mu2025} \\
+    Jerarquía de instrucciones \citep{wallace2024} & Priorizar por origen, aprendido en el entrenamiento & Entrenamiento & Ordena roles, no instrucciones; es estática \\
+    Duplicar el prompt \citep{leviathan2025} & Repetir la consulta (\texttt{<Q><Q>}) & $2\times$ entrada & Duplica todo por igual, sin priorizar \\
+    Recordatorios fijos \citep{dongre2025} & Re-inyectar el objetivo en turnos predefinidos & $\sim$1,2$\times$ & Calendario fijo, no adaptativo \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Las cuatro hacen lo mismo: tratan al conjunto de instrucciones como un bloque y lo
+refuerzan por igual. Ninguna decide \emph{qué} reforzar ni \emph{cuándo}. La
+jerarquía de \citet{wallace2024} ordena roles, pero dentro de un mismo rol no
+aborda el decaimiento temporal; la duplicación de \citet{leviathan2025} y los
+recordatorios de \citet{dongre2025} reinyectan el contenido completo sin distinguir
+entre lo que el modelo ya retuvo y lo que olvidó. Todas asumen, implícitamente, que
+las instrucciones son intercambiables; la medición que sigue muestra que no lo son.
+
+\section{Limitaciones de los enfoques actuales}
+
+Algunos trabajos empiezan a distinguir tipos: \citet{longgenbench} muestran que
+ciertas restricciones (de rango, periódicas) se degradan más que las de paso único
+en generación larga. Pero ninguno estima el efecto por tipo de instrucción ni
+deriva de ahí una política de refuerzo, y ese es el hueco. La métrica agregada
+esconde la estructura que importa: un cumplimiento medio del 70\% no distingue
+diez reglas al 100\% y diez al 40\% de veinte al 70\%, y esa diferencia cambia qué
+conviene reforzar. El refuerzo uniforme, en consecuencia, desperdicia presupuesto
+en instrucciones que no lo necesitan y puede ser contraproducente en aquellas que
+empeoran con la repetición. Además, hasta donde llega esta revisión, las grandes
+empresas y laboratorios (Anthropic, OpenAI, Google, Meta) no publicaron mediciones
+de \emph{context rot} desagregadas por tipo de instrucción sino que las
+mitigaciones son uniformes, en parte, porque no se cuenta con datos para
+discriminar.
+
+Esta limitación motiva directamente el trabajo: sin una medición por instrucción,
+el refuerzo selectivo sería pura especulación. Por eso, antes de proponerlo, había
+que producir la medición que lo justificara. La propuesta que sigue se deriva de
+cubrir ese vacío.
+
+\section{Propuesta de solución}
+
+La propuesta tiene dos partes. La primera mide la heterogeneidad de la retención
+(el grueso del trabajo y el aporte metodológico); la segunda es el sistema de
+refuerzo selectivo que ese resultado habilita; el sistema solo se justifica si la
+medición muestra esa heterogeneidad.
+
+\subsection{El \emph{harness}: cómo medí la retención}
+
+Para medir si una instrucción se olvida hace falta una conversación realista,
+larga, con presión de contexto creciente, y al final una consigna que revele si el
+modelo todavía respeta algo que se le pidió treinta mensajes atrás. Construí en
+Python un \emph{harness} con las siguientes piezas.
+
+\textbf{Codebases reales como fuente de presión.} En lugar de rellenar el contexto
+con texto sintético, el harness opera sobre tres librerías reales del ecosistema
+bayesiano de Python, elegidas por tamaño creciente: Bambi \citep{bambi2022}
+($\sim$10K líneas), ArviZ \citep{arviz2019} ($\sim$25K) y PyMC \citep{pymc2023}
+($\sim$57K). Durante los primeros veinte turnos inyecta en la conversación
+archivos de código fuente reales de esas librerías, lo que genera un gradiente de
+presión (Bambi alcanza $\sim$98K tokens de contexto; PyMC, $\sim$203K) y separa el
+efecto del contexto del de la instrucción.
+
+\textbf{Plantado de decisiones.} Definí doce ``decisiones'' de programación:
+preferencias de estilo, arquitectura, testing, nomenclatura, dependencias y
+documentación. En la condición \emph{tratamiento}, esas doce preferencias se
+plantan como pedidos casuales, en línea, dentro de los mensajes del usuario (seis
+temprano, en los turnos 1--7; seis tarde, en los 14--19); por ejemplo:
+\emph{``Importante: cuando escribas operaciones con arrays en este proyecto, usá
+siempre broadcasting de numpy en vez de for loops''}. Son preferencias del usuario
+inyectadas a mitad de conversación, no reglas del system prompt: el caso difícil,
+sin la ventaja posicional de la posición cero. La condición \emph{baseline} es
+idéntica pero no planta nada, y mide qué hace el modelo por defecto.
+
+\textbf{Turnos de evaluación.} En los turnos 20--25, el usuario solicita tareas de
+generación de código diseñadas para forzar cada decisión. Cada turno de test
+evalúa exactamente dos decisiones, una temprana y una tardía, para medir el olvido
+reciente y también el de largo plazo.
+
+\textbf{Verificadores determinísticos.} Aquí reside la reproducibilidad. Cada una
+de las doce decisiones se evalúa con un \emph{checker} que analiza el código
+generado mediante expresiones regulares y \emph{pattern matching}, y produce un
+puntaje ordinal de 0 a 3 (0 = ignorada; 3 = cumplida por completo). No interviene
+ningún LLM como juez en el \emph{scoring}: el resultado es reproducible entre
+corridas. Tiene un límite de validez de constructo: cuando el checker no halla la
+señal asigna 2 por defecto, y cuatro decisiones superan el 50\% de esos casos; las
+tres con efectos más fuertes (\texttt{parametrize}, \texttt{standalone},
+\texttt{no\_new}) tienen 0\% de ese caso, así que los hallazgos centrales no
+dependen del artefacto. Por ejemplo, el verificador de \texttt{testing\_parametrize}
+busca el decorador \texttt{@pytest.mark.parametrize} y penaliza funciones de test
+separadas; el de \texttt{broadcasting} detecta bucles \texttt{for} frente a numpy.
+
+\textbf{Lazo de herramientas y multiproveedor.} El \emph{runner} gestiona un ciclo
+de llamadas a herramientas (leer, buscar, escribir con \texttt{write\_file}) sobre
+una capa de proveedores intercambiable, que permitió evaluar cinco modelos vía
+OpenRouter y la API de OpenAI. Como base, el harness usa DeepEval \citep{deepeval}
+para las métricas con LLM como juez (persona y seguridad); en cambio, los doce
+verificadores de decisión que sostienen estos resultados son propios y
+determinísticos.
+
+\subsection{Datos y modelo bayesiano}
+
+El conjunto final consta de 28 conversaciones (9 \emph{baseline}, 19 tratamiento)
+y 244 observaciones de cumplimiento (cada una es una decisión puntuada en un turno
+de test) sobre cinco modelos (Qwen 3.5-27B como principal, con ambas condiciones;
+más Gemini 3.1 Flash Lite, GPT-5.4-nano, Nemotron 3 Super 120B y Gemma 4, solo en
+tratamiento).
+
+Sobre esas observaciones ordinales ajusté una regresión logística ordinal con
+efectos jerárquicos por tipo de decisión. El modelo ordinal es la elección
+correcta porque la escala 0--3 no tiene intervalos iguales: el salto de
+``ignorada'' (0) a ``mínima'' (1) no equivale al de ``casi'' a ``completa''. Para
+cada observación, el cumplimiento latente
+$\eta_i = \alpha_{d[i]} + \beta_{d[i]}\cdot\text{tratamiento}_i$ combina un
+intercepto por decisión $\alpha_d$ (lo que el modelo hace sin que le digan) y un
+efecto de tratamiento $\beta_d$ (cuánto mejora al pedírselo). El parámetro de
+interés es $\sigma_\beta$, el desvío estándar grupal de los efectos: un
+$\sigma_\beta$ grande indica que distintas instrucciones responden muy distinto a
+ser enunciadas: la heterogeneidad que el refuerzo selectivo necesita. El ajuste se
+hizo en PyMC \citep{pymc2023} con NUTS \citep{hoffman2014} vía nutpie
+\citep{nutpie2024}, más verificaciones predictivas.
+
+\subsection{Resultados}
+
+El modelo convergió de forma limpia (cero transiciones divergentes,
+$\hat{R}\leq 1{,}01$, tamaño de muestra efectivo mínimo superior a 1.400) y las
+verificaciones predictivas posteriores reproducen la distribución observada de
+puntajes. El desvío estándar grupal de los efectos de tratamiento resultó
+$\sigma_\beta = 2{,}11$ (intervalo de credibilidad del 94\%: $[1{,}06,\ 3{,}28]$):
+la heterogeneidad existe y es grande. Los efectos individuales, en escala de
+\emph{log-odds}, van de $-2{,}36$ a $+5{,}44$ (Figura~\ref{fig:forest}). El
+posterior separa las doce decisiones en tres grupos (Tabla~\ref{tab:res}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.40\textwidth]{treatment_effects_forest.png}
+  \caption{Efectos de tratamiento por decisión ($\beta_d$) con intervalo de
+  credibilidad del 94\%. Barras oscuras: el intervalo excluye el cero; rayada:
+  efecto negativo; claras: no concluyentes.}
+  \label{fig:forest}
+\end{figure}
+
+\emph{Instrucciones que se benefician del refuerzo.} Tres decisiones tienen un
+efecto cuyo intervalo del 94\% queda por completo sobre cero.
+\texttt{testing\_parametrize} es la más fuerte ($\beta = 5{,}44$): los modelos casi
+nunca usan \texttt{parametrize} por su cuenta (media \emph{baseline}: 0,00), pero
+retienen la preferencia cuando se la enuncian (media tratamiento: 2,79).
+\texttt{module\_constants} ($\beta = 2{,}76$) y \texttt{architecture\_standalone}
+($\beta = 2{,}38$) siguen el mismo patrón: línea de base cercana a cero, retención
+apreciable al pedirlo.
+
+\emph{Una instrucción que empeora con el refuerzo.} \texttt{dependencies\_no\_new}
+($\beta = -2{,}36$; $P(\beta<0)=0{,}98$) es la única decisión donde enunciar la
+regla \emph{reduce} el cumplimiento: la media \emph{baseline} es 2,25 (los modelos
+ya evitan agregar imports), pero pedir ``no agregues imports nuevos'' la baja a
+0,77. Es, además, la única instrucción formulada como negación, y eso hace pensar
+que el problema está en el marco (la negación) y no en el contenido.
+
+\emph{Instrucciones que no requieren intervención.} Las ocho restantes tienen
+intervalos que cruzan el cero; varias ya parten de un cumplimiento alto
+(\texttt{broadcasting} y \texttt{numpy\_style}: 3,00), y reforzarlas malgasta tokens.
+
+Por último, el modelo no detectó varianza apreciable atribuible a la arquitectura
+ni al tamaño del codebase ($\sigma_{\text{modelo}}\approx 0{,}4$;
+$\sigma_{\text{codebase}}\approx 0{,}3$, con intervalos que cruzan el cero); en el
+modelo completo, 267 transiciones divergentes llevaron a quitar esos efectos, de
+modo que esta comparación es indicativa y no concluyente, más aún porque la
+condición baseline se corrió en un solo modelo. Con esa salvedad, los datos son
+consistentes con que lo que determina la retención es la instrucción misma. El
+patrón se sostiene al restringir el análisis a Qwen ($r = 0{,}80$), con una
+excepción: \texttt{architecture\_standalone} no replica en ese subconjunto
+($\beta$ pasa de $2{,}38$ a $-0{,}71$), de modo que las decisiones claramente
+beneficiosas se reducen de tres a dos.
+
+\begin{table}[h]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.15}
+  \caption{Prioridades de refuerzo derivadas del posterior. La ganancia es el cambio
+  esperado en $P(\text{puntaje}\geq 2)$ al reforzar.}
+  \label{tab:res}
+  \begin{tabular}{@{}lrl@{}}
+    \toprule
+    \textbf{Decisión} & \textbf{Ganancia} & \textbf{Acción} \\
+    \midrule
+    \texttt{testing\_parametrize} & $+0{,}78$ & Reforzar \\
+    \texttt{module\_constants}    & $+0{,}51$ & Reforzar \\
+    \texttt{architecture\_standalone} & $+0{,}34$ & Reforzar \\
+    \texttt{naming\_underscore}, \texttt{assert\_almost}, \texttt{regex\_comments} & $+0{,}14$ a $+0{,}24$ & Incierto \\
+    6 decisiones restantes & $<+0{,}04$ & Omitir \\
+    \texttt{dependencies\_no\_new} & $-0{,}47$ & Nunca reforzar \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{El sistema que esto habilita}
+
+La medición es el prerrequisito de un sistema de refuerzo selectivo basado en
+Bayesian Knowledge Tracing. En el harness ya está prototipado un \emph{tracker}
+bayesiano que mantiene una creencia gaussiana $\mathcal{N}(\mu,\sigma^2)$ sobre el
+cumplimiento latente de cada instrucción, la actualiza con cada observación
+(aproximación de Laplace sobre un \emph{Graded Response Model}) y la hace decaer
+entre turnos ($\gamma<1$). Sobre esa creencia, una política puede reforzar
+\emph{selectivamente} solo las instrucciones con menor probabilidad de
+cumplimiento, hasta un presupuesto fijo de tokens: \texttt{parametrize} recibe
+refuerzo, \texttt{no\_new\_imports} queda excluida, y las que ya se cumplen no
+gastan presupuesto. La Tabla~\ref{tab:res} es, en esencia, esa regla de asignación.
+
+\section{Conclusiones}
+
+Este trabajo midió la retención de instrucciones por tipo en asistentes de
+programación basados en LLMs y encontró que es marcadamente heterogénea: los
+efectos del tratamiento varían en más de un orden de magnitud. Algunas preferencias
+se retienen apenas se las enuncia. La mayoría ya se cumplen por defecto, así que
+reforzarlas solo desperdicia tokens. Y hay una que empeora cuando se la refuerza:
+la única formulada como negación. No se detectó varianza apreciable atribuible al
+modelo ni al nivel de presión de contexto, aunque el diseño limita esa comparación:
+los datos apuntan a que lo que decide si una instrucción se retiene es la
+instrucción misma.
+
+La literatura mide el olvido en agregado y nunca por instrucción; ese es el dato
+que faltaba y que acá medí. La implicancia práctica es directa: el refuerzo
+uniforme malgasta la mayor parte de su presupuesto y puede ser contraproducente,
+mientras que una política derivada de la medición indica cuáles conviene reforzar y
+cuáles dejar sin intervención, incluida la que no hay que reforzar nunca. Las
+probabilidades de retención estimadas son el insumo que un sistema de Bayesian
+Knowledge Tracing necesitaría para funcionar.
+
+Los comentarios de los revisores de ASAID orientan las siguientes líneas. La más
+inmediata es ampliar y blindar la medición: correr la condición baseline en todos
+los modelos (acá quedó atada a uno) y sumar réplicas, y complementar los
+verificadores determinísticos con un panel de jueces LLM de otras familias, ciegos
+a la condición, para separar el sesgo de medición del efecto real. Una segunda
+línea, sugerida en la revisión, afila la negación: reformular como negación las
+instrucciones que sí se benefician aislaría si pesa el marco o el contenido.
+Quedan, además, la medición temporal densa para estimar $\gamma$, la evaluación en
+lazo cerrado frente al refuerzo uniforme, y la validación sobre conversaciones
+reales en lugar del banco simulado.
+
+\begin{spacing}{1.0}
+\scriptsize
+\raggedright
+\setlength{\bibsep}{0.12em}
+\begin{multicols}{2}
+\begin{thebibliography}{99}
+\setlength{\itemsep}{0pt}
+\setlength{\parsep}{0pt}
+
+\bibitem[Abril-Pla et al.(2023)]{pymc2023} Abril-Pla, O., Andreani, V., Carroll, C., Dong, L., Fonnesbeck, C. J., Kochurov, M., \ldots{} Zinkov, R. (2023). PyMC: A modern, and comprehensive probabilistic programming framework in Python. \emph{PeerJ Computer Science, 9}, e1516. \url{https://doi.org/10.7717/peerj-cs.1516}
+
+\bibitem[Anil et al.(2024)]{anil2024} Anil, C., Durmus, E., Sharma, M., Benton, J., Kundu, S., Batson, J., \ldots{} Duvenaud, D. (2024). Many-shot jailbreaking. \emph{Advances in Neural Information Processing Systems, 37}.
+
+\bibitem[Capretto et al.(2022)]{bambi2022} Capretto, T., Piho, C., Kumar, R., Westfall, J., Yarkoni, T., \& Martin, O. A. (2022). Bambi: A simple interface for fitting Bayesian linear models in Python. \emph{Journal of Statistical Software, 103}(15), 1--29. \url{https://doi.org/10.18637/jss.v103.i15}
+
+\bibitem[Corbett \& Anderson(1994)]{corbett1994} Corbett, A. T., \& Anderson, J. R. (1994). Knowledge tracing: Modeling the acquisition of procedural knowledge. \emph{User Modeling and User-Adapted Interaction, 4}(4), 253--278. \url{https://doi.org/10.1007/BF01099821}
+
+\bibitem[Dongre et al.(2025)]{dongre2025} Dongre, V., Rossi, R. A., Lai, V. D., Yoon, D. S., Hakkani-Tür, D., \& Bui, T. (2025). \emph{Drift no more? Context equilibria in multi-turn LLM interactions} (\href{https://arxiv.org/abs/2510.07777}{arXiv:2510.07777}). arXiv.
+
+\bibitem[Du et al.(2025)]{du2025} Du, Y., Tian, M., Ronanki, S., Rongali, S., Bodapati, S. B., Galstyan, A., \ldots{} Peng, H. (2025). Context length alone hurts LLM performance despite perfect retrieval. En \emph{Findings of the ACL: EMNLP 2025} (pp. 23281--23298).
+
+\bibitem[He et al.(2024)]{he2024} He, Y., Jin, D., Wang, C., Bi, C., Mandyam, K., Zhang, H., \ldots{} Wang, S. (2024). \emph{Multi-IF: Benchmarking LLMs on multi-turn and multilingual instructions following} (\href{https://arxiv.org/abs/2410.15553}{arXiv:2410.15553}). arXiv.
+
+\bibitem[Hoffman \& Gelman(2014)]{hoffman2014} Hoffman, M. D., \& Gelman, A. (2014). The No-U-Turn sampler: Adaptively setting path lengths in Hamiltonian Monte Carlo. \emph{Journal of Machine Learning Research, 15}, 1593--1623. \url{https://jmlr.org/papers/v15/hoffman14a.html}
+
+\bibitem[Ip(2025)]{deepeval} Ip, J. (2025). \emph{DeepEval: The LLM evaluation framework} [Software]. Confident AI. \url{https://github.com/confident-ai/deepeval}
+
+\bibitem[Kumar et al.(2019)]{arviz2019} Kumar, R., Carroll, C., Hartikainen, A., \& Martin, O. A. (2019). ArviZ: A unified library for exploratory analysis of Bayesian models in Python. \emph{Journal of Open Source Software, 4}(33), 1143. \url{https://doi.org/10.21105/joss.01143}
+
+\bibitem[Laban et al.(2025)]{laban2025} Laban, P., Hayashi, H., Zhou, Y., \& Neville, J. (2025). \emph{LLMs get lost in multi-turn conversation} (\href{https://arxiv.org/abs/2505.06120}{arXiv:2505.06120}). arXiv.
+
+\bibitem[Leviathan et al.(2025)]{leviathan2025} Leviathan, Y., Kalman, M., \& Matias, Y. (2025). \emph{Prompt repetition improves non-reasoning LLMs} (\href{https://arxiv.org/abs/2512.14982}{arXiv:2512.14982}). arXiv.
+
+\bibitem[Liu et al.(2024)]{liu2024} Liu, N. F., Lin, K., Hewitt, J., Paranjape, A., Bevilacqua, M., Petroni, F., \& Liang, P. (2024). Lost in the middle: How language models use long contexts. \emph{Transactions of the Association for Computational Linguistics, 12}, 157--173. \url{https://doi.org/10.1162/tacl_a_00638}
+
+\bibitem[Mu et al.(2025)]{mu2025} Mu, N., Lu, J., Lavery, M., \& Wagner, D. (2025). \emph{A closer look at system prompt robustness} (\href{https://arxiv.org/abs/2502.12197}{arXiv:2502.12197}). arXiv.
+
+\bibitem[Rivasseau(2025)]{rivasseau2025} Rivasseau, T. (2025). \emph{LLM reinforcement in context} (\href{https://arxiv.org/abs/2511.12782}{arXiv:2511.12782}). arXiv.
+
+\bibitem[Seyboldt(2024)]{nutpie2024} Seyboldt, A. (2024). \emph{nutpie: A fast sampler for Bayesian posteriors} [Software]. \url{https://github.com/pymc-devs/nutpie}
+
+\bibitem[Wallace et al.(2024)]{wallace2024} Wallace, E., Xiao, K., Leike, R., Weng, L., Heidecke, J., \& Beutel, A. (2024). \emph{The instruction hierarchy: Training LLMs to prioritize privileged instructions} (\href{https://arxiv.org/abs/2404.13208}{arXiv:2404.13208}). arXiv.
+
+\bibitem[Wu et al.(2025)]{longgenbench} Wu, Y., Hee, M. S., Hu, Z., \& Lee, R. K.-W. (2025). \emph{LongGenBench: Benchmarking long-form generation in long context LLMs} (\href{https://arxiv.org/abs/2409.02076}{arXiv:2409.02076}). ICLR 2025.
+
+\bibitem[Zhang et al.(2025)]{zhang2025} Zhang, J., Yang, J., \& Wang, K. (2025). \emph{Large language models as discounted Bayesian filters} (\href{https://arxiv.org/abs/2512.18489}{arXiv:2512.18489}). arXiv.
+
+\end{thebibliography}
+\end{multicols}
+\end{spacing}
+
+\end{document}

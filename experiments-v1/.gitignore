@@ -1,0 +1,13 @@
+.env
+data/phase1/
+data/phase2/
+data/phase3/
+data/phase1_decay_rates.json
+analysis/figures/
+__pycache__/
+codebases/
+
+# broken/superseded run dumps
+data/phase1_v0/
+data/phase1_v1_broken/
+data/phase3_v2_broken/

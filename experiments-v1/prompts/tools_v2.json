@@ -1,0 +1,48 @@
+[
+  {
+    "name": "read_file",
+    "description": "Read the contents of a file from the repository.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string", "description": "Path relative to repo root" }
+      },
+      "required": ["path"]
+    }
+  },
+  {
+    "name": "write_file",
+    "description": "Write or overwrite a file in the repository.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string", "description": "Path relative to repo root" },
+        "content": { "type": "string", "description": "Full file content to write" }
+      },
+      "required": ["path", "content"]
+    }
+  },
+  {
+    "name": "search_code",
+    "description": "Search for a pattern across the codebase using grep.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "pattern": { "type": "string", "description": "Search pattern (regex supported)" },
+        "path": { "type": "string", "description": "Directory to search in (optional, defaults to repo root)" }
+      },
+      "required": ["pattern"]
+    }
+  },
+  {
+    "name": "run_command",
+    "description": "Run a shell command in the repository root.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": { "type": "string", "description": "Shell command to execute" }
+      },
+      "required": ["command"]
+    }
+  }
+]

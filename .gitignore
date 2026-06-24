@@ -3,6 +3,7 @@
 
 # run data
 data/codebases/
+experiments-v1/codebases/
 logs/*
 !logs/README.md
 *.eval
@@ -21,3 +22,16 @@ __pycache__/
 # analysis outputs
 analysis-out/
 *.nc
+
+# latex build artifacts (keep .tex/.bib/.cls/.bst/.pdf)
+*.aux
+*.bcf
+*.bbl
+*.blg
+*.out
+*.run.xml
+*.toc
+*.nav
+*.snm
+*.fls
+*.fdb_latexmk
