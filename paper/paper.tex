@@ -2,7 +2,7 @@
 % Format: Springer LNCS, APA 7, anonymized submission
 % Structure: EN title/abstract first, then ES, then body
 %
-\documentclass{llncs}
+\documentclass[a4paper]{llncs}
 
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
@@ -30,29 +30,25 @@
 \maketitle
 
 \begin{abstract}
-Large language models lose adherence to user-stated preferences over
-long conversations. This holds even when the system prompt keeps its other
-instructions fixed, so the loss has no visible trigger. Our central finding
-is that they do not forget these preferences equally: retention is markedly
-uneven from one instruction to the next, and treating it as uniform hides
-that variation. Prior work reports mean compliance and mitigates
-uniformly, restating every instruction each turn, which assumes all
-instructions are retained alike; we measure retention per instruction
-instead. We plant
-preferences in realistic multi-turn coding sessions on three open-source
-Python codebases, across several models and twelve instruction types, and
-grade compliance with deterministic checkers rather than an LLM judge, so
-the scores are reproducible. A Bayesian hierarchical model then estimates
-how strongly each instruction is retained. Most preferences are already
-followed by default, a few are honored only when explicitly restated, and
-one shows a small negative estimate that is likely a measurement artifact.
-Only three of twelve
-instruction types gain enough from restating to justify it, which argues
-for targeted rather than blanket reinforcement. The asymmetry matters most
-for agents deployed in long-running loops, where no human reviews each step:
-guardrails are themselves instructions, so a safety-relevant rule can decay
-silently while the agent keeps acting, and without per-instruction
-monitoring nothing flags it.
+LLM agents increasingly run for hundreds of turns under instructions given
+once at the start, safety guardrails among them, that must hold as the
+context keeps growing. Yet we find these instructions are not retained
+equally: a model keeps following some and drops others, with nothing to
+flag the lapse. Prior work reports mean
+compliance and reinforces every instruction uniformly; we measure retention
+per instruction instead. We plant preferences in multi-turn coding sessions
+on three open-source Python codebases, across five models and twelve
+instruction types, and grade compliance with deterministic checkers rather
+than an LLM judge, so the scores are reproducible. A Bayesian hierarchical
+model then estimates how strongly each instruction is retained. Most
+preferences are already followed by default, and a few only when explicitly
+restated. Only three of twelve types gain enough from restating to justify
+it, so blanket reinforcement spends most of its tokens for no gain. The unevenness cuts the
+other way for safety: a guardrail is just another instruction, and the rules
+a model would not follow on its own are the ones most likely to slip. Since
+safety is conjunctive, an aggregate compliance rate cannot tell whether the
+rule that matters still holds, and in an agent loop nothing flags the lapse
+without per-instruction monitoring.
 
 \keywords{instruction retention \and context rot \and Bayesian inference
 \and AI safety \and LLM evaluation}
@@ -61,43 +57,41 @@ monitoring nothing flags it.
 % --- SPANISH TITLE AND ABSTRACT ---
 
 \begin{center}
-\vspace{1cm}
+\vspace{0.3cm}
 {\Large \bfseries\boldmath No Todas las Instrucciones se Olvidan Igual}
-\vspace{0.5cm}
+\vspace{0.25cm}
 \end{center}
 
 \begin{abstract}
-Los grandes modelos de lenguaje pierden adherencia a las preferencias del
-usuario en conversaciones extensas. Esto ocurre incluso cuando el system
-prompt mantiene fijas sus dem\'as instrucciones, de modo que la p\'erdida no
-tiene se\~nal visible. Nuestro
-hallazgo central es que no se olvidan todas las preferencias por igual: la
-retenci\'on es marcadamente despareja de una instrucci\'on a otra, y
-tratarla como uniforme oculta esa disparidad. El trabajo previo
-reporta cumplimiento promedio y mitiga uniformemente, repitiendo cada
-instrucci\'on en cada turno, asumiendo que todas se retienen igual;
-nosotros medimos la retenci\'on por instrucci\'on. Plantamos preferencias
-en sesiones de programaci\'on multi-turno sobre tres repositorios de Python
-de c\'odigo abierto, en varios modelos y doce tipos de instrucci\'on, y
-evaluamos el cumplimiento con verificadores determin\'isticos en lugar de un
-juez LLM, de modo que los puntajes son reproducibles. Un modelo jer\'arquico
-bayesiano estima cu\'anto se retiene cada instrucci\'on. La mayor\'ia de las preferencias ya se cumplen por defecto,
-unas pocas se respetan solo al enunciarse, y una muestra un peque\~no
-efecto negativo, probablemente un artefacto de medici\'on. Solo tres de
-doce tipos de instrucci\'on
-ganan lo suficiente al reenunciarse para justificarlo, lo que favorece
-un refuerzo dirigido antes que uniforme. La asimetr\'ia importa sobre todo
-para agentes desplegados en loops, donde ning\'un humano
-revisa cada paso: las barreras de seguridad son tambi\'en instrucciones, de
-modo que una regla relevante para la seguridad puede degradarse en silencio
-mientras el agente sigue actuando, y sin monitoreo por instrucci\'on esa
-degradaci\'on pasa inadvertida.
+Los agentes LLM operan cada vez m\'as durante cientos de turnos bajo
+instrucciones dadas una sola vez al inicio, las barreras de seguridad entre
+ellas, que deben sostenerse a medida que el contexto crece. Sin embargo,
+encontramos que esas instrucciones no se retienen por igual: el modelo sigue
+cumpliendo unas y abandona otras, sin nada que se\~nale la falla. El trabajo
+previo reporta cumplimiento
+promedio y refuerza cada instrucci\'on de manera uniforme; nosotros medimos
+la retenci\'on por instrucci\'on. Plantamos preferencias en sesiones de
+programaci\'on multi-turno sobre tres repositorios de Python de c\'odigo
+abierto, en cinco modelos y doce tipos de instrucci\'on, y evaluamos el
+cumplimiento con verificadores determin\'isticos en lugar de un juez LLM, de
+modo que los puntajes son reproducibles. Un modelo jer\'arquico bayesiano
+estima cu\'anto se retiene cada instrucci\'on. La mayor\'ia de las
+preferencias ya se cumplen por defecto, y unas pocas solo al enunciarse de
+forma expl\'icita. Solo tres de doce tipos ganan lo suficiente al
+reenunciarse para justificarlo, de modo que el refuerzo uniforme gasta la
+mayor\'ia de sus tokens sin ganancia. La disparidad juega en contra de la
+seguridad: una
+barrera de seguridad es una instrucci\'on m\'as, y las reglas que el modelo
+no seguir\'ia por s\'i solo son las m\'as propensas a fallar. Como la
+seguridad es conjuntiva, una tasa de cumplimiento agregada no puede decir si
+la regla que importa sigue vigente, y en un loop de agente nada advierte la
+falla sin monitoreo por instrucci\'on.
 
 \keywords{retenci\'on de instrucciones \and degradaci\'on de contexto
 \and inferencia bayesiana \and seguridad de la IA \and evaluaci\'on de LLMs}
 \end{abstract}
 
-\vspace{0.5cm}
+\vspace{0.25cm}
 \setcounter{page}{1}
 
 %% ============================================================
@@ -124,7 +118,11 @@ This is a safety concern before it is a cost concern. When the model drops
 a preference, a chat user notices and restates it; a deployed agent has no
 such supervisor, so a guardrail that decays does so silently while the
 agent keeps acting through tools whose effects are real and often
-irreversible \parencite{mu2025}. Repeating every instruction each turn,
+irreversible \parencite{mu2025}. We plant ordinary coding preferences
+rather than guardrails, but the two are the same kind of object (an
+instruction stated once and then left to compete for attention), so how
+well a preference survives is a measurable stand-in for how a stated
+guardrail would hold. Repeating every instruction each turn,
 the standard mitigation, multiplies prompt cost and still cannot tell an
 operator which constraint remains in force. Because safety is conjunctive,
 an aggregate compliance rate says nothing about whether the one rule that
@@ -142,7 +140,7 @@ per-instruction estimates, a policy cannot tell these cases apart.
 Bayesian Knowledge Tracing \parencite{corbett1994} offers a framework
 for exactly this kind of estimation. Originally developed in education,
 BKT estimates the probability that a student has mastered a concept
-based on a sequence of observed responses. We adapt this: the LLM is
+based on a sequence of observed responses. We adapt this framing: the LLM is
 the student, and its instructions are the concepts. A BKT-based reinforcement system would only be useful if instruction
 retention is in fact heterogeneous. We test this using a Bayesian ordered logistic model with
 hierarchical effects per decision type, fitted to compliance scores
@@ -494,7 +492,12 @@ resolution of this design, what determines whether an instruction is
 retained is the instruction itself rather than the model processing it or
 the amount of surrounding context; we caution that the baseline condition
 comes from a single model (Section~\ref{sec:limitations}), so per-model
-retention cannot be fully separated.
+retention cannot be fully separated. One reading we can set aside,
+though: retention does not climb from the 26B to the 120B model, so the
+heterogeneity does not appear to be model capability under another name.
+A larger model is not automatically a more compliant one, which is what
+we would need to see if these differences were a capability effect rather
+than a property of the instruction.
 
 \subsection{Reinforcement priorities}
 
@@ -617,6 +620,18 @@ analysis ($r = 0.80$) mitigates but does not eliminate this concern.
 Future replications should include baseline conditions for every model
 tested.
 
+The instructions we plant are ordinary coding preferences, not safety
+guardrails, and the test turns measure code style rather than a harmful
+action taken or avoided. We read preferences as a proxy for guardrails
+because both are user instructions competing for the same attention, but
+that link is a hypothesis grounded in the shared mechanism, not a
+demonstrated guardrail bypass. Showing that a stated safety constraint
+decays the same way, and that the decay lets a harmful action through, is
+the experiment this paper motivates but does not run. All of our evidence
+also comes from Python coding sessions; whether the same per-instruction
+structure holds for tool-use agents under safety constraints in other
+domains is untested.
+
 The dataset contains 244 observations, with some decision-by-condition
 cells as small as 4 observations. The hierarchical model
 handles sparsity through partial pooling, and the wide credible
@@ -626,10 +641,10 @@ However, the reinforcement ranking for the ``uncertain'' category
 
 Compliance was measured at turns 20--25 only. This gives a retention
 snapshot, not a decay curve. We cannot estimate per-instruction decay
-rates or determine at which turn compliance begins to drop. Fitting actual forgetting curves would
-require compliance measurements at every turn, which would then require
-designing prompts that give the model an opportunity to demonstrate
-each decision at each turn without making the conversation artificial.
+rates or say at which turn compliance starts to drop. Fitting forgetting
+curves would mean scoring every turn, which in turn means designing
+prompts that let the model demonstrate each decision at each turn without
+making the conversation artificial.
 
 The deterministic checkers have construct-validity limitations. When a
 checker cannot find a relevant code pattern, it defaults to a score of
@@ -700,7 +715,10 @@ system would need; we leave building it to future work.
 
 \subsubsection{Use of large language models}
 During the preparation of this work the author used a large language model
-(Claude) in order to improve the language and readability of the manuscript.
+(Claude) to improve the language and readability of the manuscript. All
+experimental results were produced by the deterministic checkers and
+statistical models described above and were verified by the author, who
+takes full responsibility for the content of this article.
 
 \subsubsection{\discintname}
 The author has no competing interests to declare that are relevant to
