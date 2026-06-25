@@ -34,7 +34,7 @@ order = np.argsort(obs_means)                    # ascending -> bottom is lowest
 y = np.arange(len(decisions))
 labels = [ps.clean_label(decisions[i]) for i in order]
 
-fig, ax = plt.subplots(figsize=(6.4, 4.0))
+fig, ax = plt.subplots(figsize=(6.4, 3.6))
 xerr = [pp_means[order] - lo[order], hi[order] - pp_means[order]]
 ax.errorbar(pp_means[order], y, xerr=xerr, fmt="s", color=ps.MED,
             markersize=7, markeredgecolor=ps.MED, zorder=2, **ps.ERRORBAR_KW)

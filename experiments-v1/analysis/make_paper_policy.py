@@ -37,7 +37,7 @@ for i in order:
         colors.append(ps.LIGHT); hatches.append("")
 
 labels = [ps.clean_label(decisions[i]) for i in order]
-fig, ax = plt.subplots(figsize=(6.4, 4.0))
+fig, ax = plt.subplots(figsize=(6.4, 3.6))
 y = np.arange(len(decisions))
 xerr = [gmean[order] - ghdi[0, order], ghdi[1, order] - gmean[order]]
 bars = ax.barh(y, gmean[order], xerr=xerr, color=colors, alpha=0.9,
