@@ -16,9 +16,9 @@ LIGHT = "#cccccc"   # secondary / "inconclusive" category, predicted bars
 MED = "#808080"     # mid gray (fig 4 predicted markers)
 
 # -- Consistent element styling ---------------------------------------------
-LABEL_FONTSIZE = 12     # axis labels
-TICK_FONTSIZE = 10      # tick labels
-LEGEND_FONTSIZE = 9     # legends
+LABEL_FONTSIZE = 13     # axis labels  (~9.5pt on page at 0.75 scale)
+TICK_FONTSIZE = 11      # tick labels  (~8pt on page)
+LEGEND_FONTSIZE = 11    # legends      (~8pt on page)
 AXES_LINEWIDTH = 0.8    # spine + zero-line width
 
 # One error-bar style used by every figure that has error bars.

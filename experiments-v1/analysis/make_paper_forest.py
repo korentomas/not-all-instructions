@@ -25,7 +25,7 @@ for _, r in bs.iterrows():
     else:
         colors.append(ps.LIGHT); hatches.append("")
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(5.4, 4.2))
 y = np.arange(len(bs))
 xerr = [bs["mean"] - bs["hdi_3%"], bs["hdi_97%"] - bs["mean"]]
 bars = ax.barh(y, bs["mean"], xerr=xerr, color=colors, alpha=0.9,

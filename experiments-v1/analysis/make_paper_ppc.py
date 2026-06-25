@@ -37,7 +37,7 @@ pp_mean_treat = pp_flat[:, treat_mask].mean(axis=1)
 obs_mean_base = obs[base_mask].mean()
 obs_mean_treat = obs[treat_mask].mean()
 
-fig, (axL, axR) = plt.subplots(1, 2, figsize=(9, 3.4))
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(6.4, 2.6))
 
 # ---- LEFT panel ----
 w = 0.4

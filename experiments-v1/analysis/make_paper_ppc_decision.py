@@ -34,7 +34,7 @@ order = np.argsort(obs_means)                    # ascending -> bottom is lowest
 y = np.arange(len(decisions))
 labels = [ps.clean_label(decisions[i]) for i in order]
 
-fig, ax = plt.subplots(figsize=(8, 5))
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
 xerr = [pp_means[order] - lo[order], hi[order] - pp_means[order]]
 ax.errorbar(pp_means[order], y, xerr=xerr, fmt="s", color=ps.MED,
             markersize=7, markeredgecolor=ps.MED, zorder=2, **ps.ERRORBAR_KW)
@@ -46,7 +46,8 @@ leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="black",
               markersize=8, label="Observed"),
        Line2D([0], [0], marker="s", color="none", markerfacecolor=ps.MED,
               markersize=8, label="Predicted (90% PI)")]
-ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.06),
+ax.set_ylim(-0.7, len(decisions) - 1 + 0.9)
+ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.05),
           ncol=2, frameon=False)
 ps.style_axes(ax)
 fig.tight_layout()
