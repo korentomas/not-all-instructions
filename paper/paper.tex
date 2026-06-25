@@ -466,15 +466,16 @@ meaningful retention when stated.
 \paragraph{A marginal negative effect.}
 The only decision type with a negative estimate is
 \texttt{dependencies\_\allowbreak{}no\_new} ($\beta = -2.36$, 94\% HDI
-$[-4.46, -0.03]$), but the effect is marginal: the interval only just
-excludes zero. The
+$[-4.46, -0.03]$). Its magnitude is uncertain, since the 94\% HDI only
+just excludes zero, though the negative direction itself is credible
+($P(\beta < 0) = 0.98$). The
 baseline mean score is 2.25 (models naturally avoid adding imports),
 while stating ``do not add new imports'' lowers the treatment mean to
 0.77. One hypothesis is that the explicit negation confuses the model's
-instruction following. But the interval barely excludes zero, and the
-checker for this type (\texttt{no\_new\_imports}) counts \emph{any} import
+instruction following. But the checker for this type
+(\texttt{no\_new\_imports}) counts \emph{any} import
 statement as new, including re-shown imports already present in the file
-(Section~\ref{sec:limitations}). We therefore treat this as a candidate
+(Section~\ref{sec:limitations}), so we treat this as a candidate
 measurement artifact rather than a robust harm. Isolating the negation
 from the content (comparing ``avoid new imports'' with ``use only
 existing imports'') would settle it.
@@ -490,14 +491,13 @@ conventions without prompting; reinforcing them does not change the score.
 
 As described in Section~\ref{sec:bayesian-model}, a model with per-model
 and per-codebase intercepts placed both group-level standard deviations
-near zero, so we report the per-decision model. Retention is consistent across
-five models (26B to 120B for the three with disclosed sizes) and
-three levels of context pressure (98K to 203K tokens). Within the
-resolution of this design, what determines whether an instruction is
-retained is the instruction itself rather than the model processing it or
-the amount of surrounding context; we caution that the baseline condition
-comes from a single model (Section~\ref{sec:limitations}), so per-model
-retention cannot be fully separated. One reading we can set aside,
+near zero, so we report the per-decision model. Treatment-condition
+compliance is consistent across the five models (26B to 120B for the three
+with disclosed sizes) and three levels of context pressure (98K to 203K
+tokens), and no per-model or per-codebase effect is detectable at this
+resolution. With a single-model baseline and shrinkage priors, though, this
+is weak evidence of model-invariance, not a demonstration, and per-model
+retention cannot be fully separated (Section~\ref{sec:limitations}). One reading we can set aside,
 though: retention does not climb from the 26B to the 120B model, so the
 heterogeneity does not appear to be model capability under another name.
 A larger model is not automatically a more compliant one, which is what
@@ -526,7 +526,11 @@ Table~\ref{tab:policy} summarizes the ranking. Of 12 instruction types,
 only 3 have a reinforcement gain with 94\% HDI entirely above zero. A
 uniform policy that reinforces all 12 would spend tokens on 8
 instructions that need no help and 1 with a marginal negative
-effect.
+effect. This ranking is a cost criterion, not a safety one: a low gain may
+mean the model already complies, or that the checker saw nothing (a
+default-2 ceiling), neither of which licenses dropping a safety-relevant
+rule. It saves tokens on ordinary preferences; it does not choose which
+guardrails to stop stating.
 
 \begin{table}[t]
 \caption{Reinforcement priorities derived from posterior
@@ -546,7 +550,7 @@ Decision type & Gain & 94\% HDI & Action \\
 \texttt{testing\_assert\_almost} & $+$0.16 & $[-0.01, +0.40]$ & Uncertain \\
 \texttt{docs\_regex\_comments}   & $+$0.14 & $[-0.12, +0.45]$ & Uncertain \\
 \texttt{5 other types}           & $< +0.04$ & crosses zero & Skip \\
-\texttt{deps\_no\_new}           & $-$0.47 & $[-0.77, -0.05]$ & Avoid (marginal) \\
+\texttt{deps\_no\_new}           & $-$0.47 & $[-0.77, -0.05]$ & Likely artifact \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -633,7 +637,11 @@ guardrails, and the test turns measure code style rather than a harmful
 action taken or avoided. We read preferences as a proxy for guardrails
 because both are user instructions competing for the same attention, but
 that link is a hypothesis grounded in the shared mechanism, not a
-demonstrated guardrail bypass. Showing that a stated safety constraint
+demonstrated guardrail bypass. If anything, the proxy may overstate
+guardrail fragility: real guardrails often sit at position zero in the
+system prompt, the most stable position \parencite{liu2024}, and are
+reinforced in training, so it speaks most directly to newly stated,
+in-context constraints. Showing that a stated safety constraint
 decays the same way, and that the decay lets a harmful action through, is
 the experiment this paper motivates but does not run. All of our evidence
 also comes from Python coding sessions; whether the same per-instruction
@@ -662,10 +670,7 @@ above 50\%: \texttt{architecture\_extend} (79\%),
 (72\%), and \texttt{testing\_assert\_almost} (50\%). The three
 decisions with the strongest treatment effects (\texttt{parametrize},
 \texttt{standalone}, \texttt{no\_new}) have 0\% default-2 rates, so
-the headline findings are not driven by this artifact. The
-\texttt{no\_new\_imports} checker penalizes any \texttt{import}
-statement, including standard library modules that may be required by
-the task.
+the headline findings are not driven by this artifact.
 
 This paper does not implement Bayesian Knowledge Tracing. It measures
 the per-instruction heterogeneity that would make a BKT-based
@@ -675,25 +680,19 @@ tracking, is future work.
 
 \subsection{Future work}
 
-Several directions follow from these results and from reviewer feedback.
-The most direct is to collect matched baseline and treatment conditions
-for every model rather than for Qwen alone, which would let us estimate
-per-model effects directly instead of inferring model-invariance from a
-single-model sensitivity analysis. The deterministic checkers, though
-reproducible, have construct-validity limits, so we plan to pair them with
-a blinded panel of LLM judges from model families distinct from those
-under evaluation and to report checker--judge and inter-judge agreement.
-To separate phrasing from content, we would re-run the instructions whose
-treatment effect excludes zero under negated paraphrases, and the negated
-instruction under positive paraphrases, measuring within-instruction
-phrasing variance against between-instruction variance. Scoring compliance
-at every turn, rather than only at turns 20--25, would let us fit
-per-instruction forgetting curves and estimate per-instruction decay
-rates. Finally, implementing the posterior-derived ranking as a runtime
-policy would test whether selective reinforcement beats uniform
-reinforcement under a fixed token budget, and replacing simulated planting
-with traces from real coding sessions would test whether the structure
-holds outside the harness.
+Several directions follow. The most direct is matched baseline and
+treatment conditions for every model, which would estimate per-model
+effects directly instead of inferring model-invariance from a single-model
+check. The checkers, though reproducible, have construct-validity limits,
+so we would pair them with a blinded panel of cross-family LLM judges and
+report checker--judge and inter-judge agreement. To separate phrasing from
+content, we would re-run instructions whose effect excludes zero under
+negated paraphrases, and the negated one under positive paraphrases.
+Scoring every turn, rather than only 20--25, would fit per-instruction
+forgetting curves and decay rates. Finally, running the posterior-derived
+ranking as a runtime policy would test whether selective reinforcement
+beats uniform under a fixed token budget, and real coding-session traces
+would test whether the structure holds outside the harness.
 
 %% ============================================================
 \section{Conclusion}
@@ -703,11 +702,12 @@ holds outside the harness.
 We measured per-instruction retention in AI coding assistants and found
 treatment effects spanning nearly eight log-odds units, from
 instructions the model adopts only when told, to ones it already follows
-by default. The pattern holds across five models and three
-levels of context pressure, and the heterogeneity replicates on a single
-model with matched baseline and treatment conditions ($r = 0.80$); with
-baseline data from one model, though, we cannot fully separate per-model
-from per-instruction effects.
+by default. The pattern appears across the five models and three
+levels of context pressure tested, and the heterogeneity replicates on a
+single model with matched baseline and treatment conditions ($r = 0.80$);
+with baseline data from one model, though, we cannot fully separate
+per-model from per-instruction effects, and read the model-level result as
+no detectable effect at this resolution rather than established invariance.
 
 The practical payoff is concrete: of 12 instruction types only 3 show a
 reinforcement gain whose interval excludes zero in the full model (two when
