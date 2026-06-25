@@ -313,10 +313,10 @@ Cutpoints use an offset parameterization:
 $c_1 \sim \text{Normal}(0, 1.5)$ with positive increments
 $\Delta c \sim \text{Exp}(1)$ to guarantee ordering.
 
-The key scientific parameter is $\sigma_\beta$: the group-level
-standard deviation of treatment effects. A large $\sigma_\beta$
-indicates that different instructions respond differently to being
-stated, which is the premise required for selective reinforcement.
+$\sigma_\beta$, the group-level standard deviation of treatment effects,
+measures how much instructions vary in their response to being stated;
+a large value means different instructions benefit differently from
+reinforcement, which is the premise selective reinforcement depends on.
 
 We initially fit a full model including per-model and per-codebase
 intercepts. Both group-level standard deviations were small, with
@@ -709,12 +709,12 @@ with baseline data from one model, though, we cannot fully separate
 per-model from per-instruction effects, and read the model-level result as
 no detectable effect at this resolution rather than established invariance.
 
-The practical payoff is concrete: of 12 instruction types only 3 show a
-reinforcement gain whose interval excludes zero in the full model (two when
-restricted to the single model with matched baseline), so a uniform policy
-spends most of its tokens where they buy nothing. The retention
-probabilities estimated here are the input a Bayesian Knowledge Tracing
-system would need; we leave building it to future work.
+Of 12 instruction types, only 3 show a reinforcement gain whose interval
+excludes zero in the full model (two when restricted to the single model
+with matched baseline); a uniform policy wastes tokens on instructions that
+already comply. The retention probabilities estimated here are what a
+Bayesian Knowledge Tracing system would act on; we leave building it to
+future work.
 
 
 \begin{credits}
