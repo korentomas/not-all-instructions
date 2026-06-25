@@ -53,10 +53,11 @@ leg = [Patch(facecolor=ps.DARK, edgecolor="white", label="Reinforce"),
        Patch(facecolor=ps.DARK, edgecolor="white", hatch="///",
              label="Never reinforce"),
        Patch(facecolor=ps.LIGHT, edgecolor="white", label="Uncertain")]
-ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.08),
+ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.14),
           ncol=3, frameon=False)
 ps.style_axes(ax)
 fig.tight_layout()
+fig.subplots_adjust(top=0.90)
 ps.save(fig, "reinforcement_policy")
 
 idx = {d: i for i, d in enumerate(decisions)}

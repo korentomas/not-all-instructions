@@ -47,10 +47,11 @@ leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="black",
        Line2D([0], [0], marker="s", color="none", markerfacecolor=ps.MED,
               markersize=8, label="Predicted (90% PI)")]
 ax.set_ylim(-0.7, len(decisions) - 1 + 0.9)
-ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.05),
+ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.13),
           ncol=2, frameon=False)
 ps.style_axes(ax)
 fig.tight_layout()
+fig.subplots_adjust(top=0.90)
 ps.save(fig, "ppc_per_decision")
 
 inside = int(((obs_means >= lo) & (obs_means <= hi)).sum())

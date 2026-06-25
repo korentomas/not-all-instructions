@@ -49,7 +49,8 @@ axL.bar(x + w / 2, pred_prop, width=w, color=ps.LIGHT, label="Predicted",
 axL.set_xlabel("Score")
 axL.set_ylabel("Proportion")
 axL.set_xticks(levels)
-axL.legend(frameon=False, loc="upper left")
+axL.set_ylim(0, max(obs_prop.max(), (pred_prop + pred_prop_sd).max()) * 1.32)
+axL.legend(frameon=False, loc="upper left", borderaxespad=0.9)
 ps.style_axes(axL)
 
 # ---- RIGHT panel ----
@@ -64,7 +65,8 @@ axR.axvline(obs_mean_treat, color=ps.DARK, lw=2.0, ls="-",
             label=f"Treatment ({obs_mean_treat:.2f})")
 axR.set_xlabel("Mean score")
 axR.set_ylabel("Density")
-axR.legend(frameon=False, loc="upper left")
+axR.set_ylim(top=axR.get_ylim()[1] * 1.18)
+axR.legend(frameon=False, loc="upper left", borderaxespad=0.9)
 ps.style_axes(axR)
 
 fig.tight_layout()

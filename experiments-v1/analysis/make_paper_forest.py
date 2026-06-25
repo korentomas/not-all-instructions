@@ -41,10 +41,11 @@ leg = [Patch(facecolor=ps.DARK, edgecolor="white", label="94% HDI excludes 0"),
        Patch(facecolor=ps.DARK, edgecolor="white", hatch="///",
              label="Negative effect"),
        Patch(facecolor=ps.LIGHT, edgecolor="white", label="Inconclusive")]
-ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.08),
+ax.legend(handles=leg, loc="upper center", bbox_to_anchor=(0.5, 1.14),
           ncol=3, frameon=False)
 ps.style_axes(ax)
 fig.tight_layout()
+fig.subplots_adjust(top=0.90)
 ps.save(fig, "treatment_effects_forest")
 
 top = bs["mean"].sort_values(ascending=False)
