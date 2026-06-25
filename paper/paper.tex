@@ -43,12 +43,13 @@ than an LLM judge, so the scores are reproducible. A Bayesian hierarchical
 model then estimates how strongly each instruction is retained. Most
 preferences are already followed by default, and a few only when explicitly
 restated. Only three of twelve types gain enough from restating to justify
-it, so blanket reinforcement spends most of its tokens for no gain. The unevenness cuts the
-other way for safety: a guardrail is just another instruction, and the rules
-a model would not follow on its own are the ones most likely to slip. Since
-safety is conjunctive, an aggregate compliance rate cannot tell whether the
-rule that matters still holds, and in an agent loop nothing flags the lapse
-without per-instruction monitoring.
+it (two under a single-model robustness check), so blanket reinforcement
+spends most of its tokens for no gain. The unevenness cuts the other way for
+safety: a guardrail is just another instruction, and the rules a model would
+not follow on its own are exactly the ones a single statement may fail to
+secure. Since safety is conjunctive, an aggregate compliance rate cannot tell
+whether the rule that matters still holds, and in an agent loop nothing flags
+the lapse without per-instruction monitoring.
 
 \keywords{instruction retention \and context rot \and Bayesian inference
 \and AI safety \and LLM evaluation}
@@ -78,11 +79,12 @@ modo que los puntajes son reproducibles. Un modelo jer\'arquico bayesiano
 estima cu\'anto se retiene cada instrucci\'on. La mayor\'ia de las
 preferencias ya se cumplen por defecto, y unas pocas solo al enunciarse de
 forma expl\'icita. Solo tres de doce tipos ganan lo suficiente al
-reenunciarse para justificarlo, de modo que el refuerzo uniforme gasta la
-mayor\'ia de sus tokens sin ganancia. La disparidad juega en contra de la
-seguridad: una
+reenunciarse para justificarlo (dos bajo una verificaci\'on con un solo
+modelo), de modo que el refuerzo uniforme gasta la mayor\'ia de sus tokens
+sin ganancia. La disparidad juega en contra de la seguridad: una
 barrera de seguridad es una instrucci\'on m\'as, y las reglas que el modelo
-no seguir\'ia por s\'i solo son las m\'as propensas a fallar. Como la
+no seguir\'ia por s\'i solo son justamente las que un solo enunciado puede
+no asegurar. Como la
 seguridad es conjuntiva, una tasa de cumplimiento agregada no puede decir si
 la regla que importa sigue vigente, y en un loop de agente nada advierte la
 falla sin monitoreo por instrucci\'on.
@@ -318,9 +320,9 @@ stated, which is the premise required for selective reinforcement.
 
 We initially fit a full model including per-model and per-codebase
 intercepts. Both group-level standard deviations were small, with
-posteriors concentrated near zero and 94\% intervals spanning zero
-($\sigma_\text{model}, \sigma_\text{codebase} \approx 0.3$), so these
-terms add no explanatory power. We therefore report the simpler
+posteriors concentrated near zero ($\sigma_\text{model},
+\sigma_\text{codebase} \approx 0.3$, 94\% HDI upper bound below $0.7$), so
+these terms add no explanatory power. We therefore report the simpler
 per-decision model, whose diagnostics are clean (zero divergences, all
 $\hat{R} \leq 1.01$, minimum ESS $= 1311$). With baseline data from a
 single model (Section~\ref{sec:limitations}), per-model effects are in
@@ -398,7 +400,10 @@ on Bambi only due to budget constraints.
 
 We ran 28 conversations in total: 9 baseline and 19 treatment. Models
 were accessed through OpenRouter (Qwen, Gemini, Gemma, Nemotron) and
-the OpenAI API (GPT-5.4-nano). Not every conversation produced a
+the OpenAI API (GPT-5.4-nano), queried at each provider's default sampling
+settings (temperature not overridden), one generation per turn capped at
+2048 (Qwen) or 4096 tokens; scores reflect a single draw, not an average.
+Not every conversation produced a
 scorable response at every test turn; the final dataset consists of 244
 compliance observations: each observation is one decision type scored
 at one test turn in one conversation. Observations span 5 models, 12
@@ -565,8 +570,11 @@ decisions with no treatment effect (\texttt{broadcasting},
 compliance near 3.0. The models' defaults already match these
 conventions, so restating them has no effect.
 
-The negative effect on \texttt{dependencies\_\allowbreak{}no\_new}
-($P(\beta < 0) = 0.98$) is the only negative effect in the study. The instruction
+The negative effect on \texttt{dependencies\_\allowbreak{}no\_new} is the
+only one in the study. We call it marginal, since its 94\% HDI barely
+excludes zero, though its direction is credible ($P(\beta < 0) = 0.98$); the
+magnitude, and whether it reflects negation framing or the checker artifact
+(Section~\ref{sec:limitations}), remain open. The instruction
 ``do not add new imports'' is the only one phrased as a negation. All
 other instructions tell the model what to do, not what to avoid. This
 raises the question of whether the negative treatment effect reflects
@@ -576,8 +584,8 @@ negation is the problem, reformulating as ``use only existing imports''
 might produce a positive effect. If import management is inherently
 hard to retain, no framing will help. Distinguishing these hypotheses
 requires a controlled comparison that holds semantic content constant
-while varying the negation frame. A reviewer suggested exactly this test;
-we adopt it in the future work below.
+while varying the negation frame. We adopt this comparison in the future
+work below.
 
 \subsection{Robustness checks}
 
@@ -702,7 +710,8 @@ baseline data from one model, though, we cannot fully separate per-model
 from per-instruction effects.
 
 The practical payoff is concrete: of 12 instruction types only 3 show a
-reinforcement gain whose interval excludes zero, so a uniform policy
+reinforcement gain whose interval excludes zero in the full model (two when
+restricted to the single model with matched baseline), so a uniform policy
 spends most of its tokens where they buy nothing. The retention
 probabilities estimated here are the input a Bayesian Knowledge Tracing
 system would need; we leave building it to future work.
