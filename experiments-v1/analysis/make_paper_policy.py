@@ -1,6 +1,11 @@
 import arviz as az, numpy as np, matplotlib.pyplot as plt
+import matplotlib as mpl
 from matplotlib.patches import Patch
 from scipy.special import expit
+
+# Match the original paper figures (fig 1 + fig 4): STIX serif, not DejaVu Sans
+mpl.rcParams["mathtext.fontset"] = "stix"
+mpl.rcParams["font.family"] = "STIXGeneral"
 
 idata = az.from_netcdf("retention_model.nc")
 post = idata.posterior
