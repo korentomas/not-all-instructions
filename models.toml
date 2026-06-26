@@ -1,0 +1,71 @@
+# Models, judges, and per-model settings for the eval. Edit this file to change
+# what runs; no Python change needed. run.py and run_framing.py read it through
+# src/retention/config.py.
+#
+# A model id is "<provider>/<model>": the prefix picks the client (openrouter/...,
+# azureai/...). A model with no [models."<id>"] block below uses the defaults:
+# max_tokens = 4096, full reasoning history, and the provider's own routing.
+
+# Candidates under test. Each runs in every condition.
+candidates = [
+  "openrouter/qwen/qwen3.5-27b",                  # Qwen 3.5 27B (Alibaba), the v1 primary
+  "openrouter/nvidia/nemotron-3-super-120b-a12b", # Nemotron 3 Super 120B (Nvidia)
+  "openrouter/google/gemma-4-26b-a4b-it",         # Gemma 4 26B (Google)
+  "openrouter/google/gemini-3.1-flash-lite",      # Gemini 3.1 Flash Lite (Google)
+  "openrouter/openai/gpt-5.4-nano",               # GPT-5.4-nano (OpenAI)
+  "openrouter/qwen/qwen3.5-plus-20260420",        # Qwen 3.5 Plus (1M ctx), covers all 3 codebases
+]
+# Left out, context window smaller than the ~133-200K conversation:
+#   azureai/gpt-oss-120b              128K
+#   azureai/llama-3.3-70b             128K
+#   openrouter/moonshotai/kimi-k2.6   256K, viable but ~$53/run; deferred until funded
+
+# Framing run (run_framing.py): a 3-model cross-family subset of the candidates.
+framing_candidates = [
+  "openrouter/qwen/qwen3.5-27b",
+  "openrouter/google/gemini-3.1-flash-lite",
+  "openrouter/openai/gpt-5.4-nano",
+]
+
+# Judge panel, scored on every probed turn. Keep it cross-family: no judge may
+# share a family with a candidate, or it grades itself (the v1 self-bias).
+# tests/test_run_config.py enforces this.
+[judges]
+judge_1 = "openrouter/anthropic/claude-haiku-4.5"  # Anthropic
+judge_2 = "azureai/Mistral-Large-3"                 # Mistral
+judge_3 = "azureai/grok-4.3"                        # xAI
+
+# A deliberately same-family judge, used only to quantify self-bias against the
+# clean panel. Never part of the main panel.
+[ablation]
+judge_qwen_self = "openrouter/qwen/qwen3.5-27b"
+
+# --- Per-model settings ----------------------------------------------------
+# max_tokens caps each turn's output. Outputs accumulate into later turns'
+# inputs, so a high cap grows the conversation toward the context window.
+# reasoning_history = "none" drops prior reasoning from later turns.
+# provider_order pins OpenRouter to specific backends (no fallbacks).
+
+# qwen3.5-27b: 262K window, barely above the ~200K conversation, and it writes
+# verbose files, so a high cap truncates the write and the tool call fails hard.
+# Cap at 2048; even then pymc (the biggest codebase) overflows and those samples
+# are dropped. Pin to Alibaba: other OpenRouter backends return empty write_file
+# calls at high context. Strip reasoning: qwen reasons ~35K tokens/turn, which
+# accumulates and overflows the window.
+[models."openrouter/qwen/qwen3.5-27b"]
+max_tokens = 2048
+reasoning_history = "none"
+provider_order = ["Alibaba"]
+
+# qwen3.5-plus: 1M window, same family. Cap high enough to finish qwen's verbose
+# files on every codebase incl pymc. Still strip reasoning (it accumulates over
+# 26 turns even at 1M).
+[models."openrouter/qwen/qwen3.5-plus-20260420"]
+max_tokens = 16384
+reasoning_history = "none"
+
+# Framing-run overrides, merged on top of [models] for run_framing.py only.
+# qwen keeps its Alibaba pin and reasoning strip but runs at the v1 output cap
+# (1024) instead of the main sweep's 2048.
+[framing.models."openrouter/qwen/qwen3.5-27b"]
+max_tokens = 1024

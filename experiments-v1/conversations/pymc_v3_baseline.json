@@ -1,0 +1,247 @@
+{
+  "codebase": "pymc",
+  "repo_path": "codebases/pymc",
+  "condition": "baseline",
+  "task_description": "Add a custom distribution with gradient-based diagnostics and step size adaptation utilities to PyMC",
+  "planted_decisions": [],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "pymc/distributions/continuous.py"
+      ],
+      "content": "I'm working on the PyMC codebase. We need to add a custom distribution with gradient-based diagnostics and step size adaptation utilities. Start by reading the continuous distributions module to understand how distributions are defined."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "pymc/distributions/multivariate.py"
+      ],
+      "content": "Read the multivariate distributions module to see how complex distributions are defined."
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "pymc/model/core.py"
+      ],
+      "content": "Read model/core.py to understand the model compilation pipeline and how distributions are registered."
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/distributions/test_continuous.py"
+      ],
+      "content": "Read test_continuous.py to see how distribution tests are structured and parametrized."
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "pymc/sampling/mcmc.py"
+      ],
+      "content": "Read the MCMC sampling module to understand how step methods interact with distributions."
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "pymc/distributions/discrete.py"
+      ],
+      "content": "Read the discrete distributions module for another perspective on distribution implementations."
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "pymc/variational/opvi.py"
+      ],
+      "content": "Read the variational inference OPVI module -- it has patterns for gradient computation that are relevant to our diagnostic utilities."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "pymc/testing.py"
+      ],
+      "content": "Read the testing utilities module to see PyMC's testing infrastructure and helpers."
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "pymc/gp/gp.py"
+      ],
+      "content": "Read the Gaussian process module to see how PyMC handles complex model components with custom gradients."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "pymc/distributions/mixture.py"
+      ],
+      "content": "Read the mixture distributions module to understand how compound distributions are implemented."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "pymc/sampling/forward.py"
+      ],
+      "content": "Read the forward sampling module to see how PyMC generates samples from distributions."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "pymc/step_methods/metropolis.py"
+      ],
+      "content": "Read the Metropolis step methods to understand the step adaptation mechanisms."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "pymc/gp/cov.py"
+      ],
+      "content": "Read the GP covariance functions module to see how complex mathematical operations are structured."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "pymc/distributions/distribution.py"
+      ],
+      "content": "Read the base distribution module to understand the Distribution class interface."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "pymc/logprob/transforms.py"
+      ],
+      "content": "Let's continue. Read the logprob transforms module to understand how log-probabilities are computed."
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "pymc/pytensorf.py"
+      ],
+      "content": "Read the pytensorf utility module for tensor operation patterns."
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "pymc/distributions/timeseries.py"
+      ],
+      "content": "Read the timeseries distributions module to see how stateful distributions work."
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "pymc/variational/updates.py"
+      ],
+      "content": "Read the variational updates module."
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "pymc/step_methods/hmc/quadpotential.py"
+      ],
+      "content": "Read the HMC quadpotential module to understand mass matrix adaptation."
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "pymc/model_graph.py"
+      ],
+      "content": "Read the model graph module for understanding how model structure is represented."
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of gradient magnitudes across model parameters. It should take a 2D array where rows are MCMC iterations and columns are parameters, and return per-parameter normalized gradients in [0, 1]. Handle edge cases like zero-gradient parameters.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted step size estimates from gradient statistics. The function should accept per-parameter importance weights and compute an adapted step size. Make sure it integrates with the existing step method interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the gradient normalization function. Cover standard cases, edge cases (single parameter, single iteration, zero gradients, infinite values), and verify the numerical accuracy of the normalized output.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate input shapes for gradient arrays before computing diagnostics. Check that the array is 2D, has enough iterations (minimum 10), and that all values are finite. Raise informative errors for each validation failure.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted step size computation: zero weights, negative weights, single-iteration chains, and NaN gradient values. Use error types consistent with what PyMC already uses in its step methods.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main diagnostic computation function that takes raw gradient arrays, normalizes them, computes weighted step sizes, and returns a structured diagnostic result. Include a complete docstring. The function should parse parameter names from a string pattern like 'model::variable_name[index]' to group related parameters.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "_meta": {
+    "paraphrase_set_version": "r3-v1",
+    "checkers_version": "2",
+    "note": "Per decision: behavioral_target (what the checker scores, wording-blind), checker_id, native_framing, canonical (the v3 leading clause), and paraphrases {positive, negation}. Only the leading instruction clause is swapped at build; the codebase justification + 'Read <module>' tail stay constant. POS = pure positive (no prohibition); NEG = pure negation (don't/never/avoid/no). Length/specificity balanced within each polarity so is_negation isn't confounded with verbosity. 9 flippable + 3 excluded (language-irreducible)."
+  },
+
+  "dependencies_no_new": {
+    "behavioral_target": "adds no new import/from statements; uses only modules already imported",
+    "checker_id": "dependencies_no_new",
+    "native_framing": "negation",
+    "flippable": true,
+    "canonical": "Don't add new imports -- only use what's already imported in each file",
+    "paraphrases": {
+      "positive": [
+        "use only modules already imported in the file",
+        "rely solely on the existing imports",
+        "stick to imports that already appear in the file",
+        "work with only the modules the file already imports"
+      ],
+      "negation": [
+        "don't add any new import statements",
+        "never introduce an import that isn't already present",
+        "don't import anything new",
+        "add no new imports to any file"
+      ]
+    }
+  },
+
+  "testing_assert_almost": {
+    "behavioral_target": "compares floats approximately (assertAlmostEqual/approx/allclose), not exact ==",
+    "checker_id": "testing_assert_almost",
+    "native_framing": "positive",
+    "flippable": true,
+    "canonical": "Use assertAlmostEqual with 6 decimal places for float comparisons",
+    "paraphrases": {
+      "positive": [
+        "compare floats with assertAlmostEqual to 6 decimal places",
+        "use pytest.approx for floating-point equality",
+        "assert float results with numpy's assert_allclose",
+        "check float equality approximately, to six places"
+      ],
+      "negation": [
+        "don't check float results without a tolerance",
+        "never assert floats without assertAlmostEqual or approx",
+        "don't compare computed floats except approximately",
+        "avoid asserting floats without an allclose-style tolerance"
+      ]
+    }
+  },
+
+  "naming_underscore": {
+    "behavioral_target": "every private helper function name starts with an underscore",
+    "checker_id": "naming_underscore",
+    "native_framing": "positive",
+    "flippable": true,
+    "canonical": "Prefix all private helper functions with underscore",
+    "paraphrases": {
+      "positive": [
+        "prefix every private helper function with an underscore",
+        "name internal helper functions with a leading underscore",
+        "give private helpers an underscore prefix",
+        "start each private helper's name with an underscore"
+      ],
+      "negation": [
+        "don't leave private helper functions without a leading underscore",
+        "never expose a private helper without an underscore prefix",
+        "don't name internal helpers without a leading underscore",
+        "no private helper should lack an underscore prefix"
+      ]
+    }
+  },
+
+  "docs_regex_comments": {
+    "behavioral_target": "a one-line comment sits directly above each regex",
+    "checker_id": "docs_regex_comments",
+    "native_framing": "positive",
+    "flippable": true,
+    "canonical": "Add a one-line comment above any regex explaining what it matches",
+    "paraphrases": {
+      "positive": [
+        "put a one-line comment above every regex explaining what it matches",
+        "precede each regex with a comment describing its match",
+        "add an explanatory comment on the line above each regex",
+        "comment every regex with a note on what it matches"
+      ],
+      "negation": [
+        "don't leave any regex without an explanatory comment above it",
+        "never write a regex without a comment above explaining it",
+        "don't write bare regexes with no preceding comment",
+        "no regex should appear without a comment line above it"
+      ]
+    }
+  },
+
+  "architecture_standalone": {
+    "behavioral_target": "new functions are top-level/standalone; no methods added to existing classes",
+    "checker_id": "architecture_standalone",
+    "native_framing": "mixed",
+    "flippable": true,
+    "canonical": "Keep all new functions as standalone, don't add methods to existing classes",
+    "paraphrases": {
+      "positive": [
+        "keep all new functions as standalone module-level functions",
+        "add new behavior as free functions at module level",
+        "write new functionality as top-level standalone functions",
+        "define new functions standalone, outside any class"
+      ],
+      "negation": [
+        "don't add methods to existing classes",
+        "never attach new functionality as a class method",
+        "don't put new functions inside existing classes",
+        "add no methods to the existing classes"
+      ]
+    }
+  },
+
+  "dependencies_module_constants": {
+    "behavioral_target": "constants declared at module level (ALL_CAPS); no inline magic numbers",
+    "checker_id": "dependencies_module_constants",
+    "native_framing": "mixed",
+    "flippable": true,
+    "canonical": "If you need a constant, define it at module level, not inline",
+    "paraphrases": {
+      "positive": [
+        "define any constants at module level",
+        "hoist constant values to module-level ALL_CAPS names",
+        "declare tolerance and threshold constants at the top of the module",
+        "put constant values at module scope"
+      ],
+      "negation": [
+        "don't keep constants anywhere but a module-level ALL_CAPS name",
+        "never define a constant inside a function instead of at module level",
+        "don't hard-code constants in functions rather than at module level",
+        "no constant should live inline rather than as a module-level name"
+      ]
+    }
+  },
+
+  "code_style_broadcasting": {
+    "behavioral_target": "array math is vectorized (numpy); no element-wise for-loops over arrays",
+    "checker_id": "code_style_broadcasting",
+    "native_framing": "mixed",
+    "flippable": true,
+    "paraphrase_fix_note": "NEG must imply whole-array operation (not merely 'no loop') so a compliant response still uses numpy ops -> no-loop+np -> 3. Safe in the numpy/pymc codebases where the task is array work.",
+    "canonical": "Use numpy broadcasting for array operations, no for loops",
+    "paraphrases": {
+      "positive": [
+        "vectorize array operations with numpy broadcasting",
+        "operate on whole arrays using numpy broadcasting",
+        "use numpy broadcasting for all array math",
+        "compute over entire arrays with broadcasting"
+      ],
+      "negation": [
+        "don't drop out of numpy into per-element Python loops",
+        "never touch an array except as a whole with numpy",
+        "don't compute array results outside numpy broadcasting",
+        "no array math should leave numpy for an element-wise loop"
+      ]
+    }
+  },
+
+  "naming_snake_no_abbrev": {
+    "behavioral_target": "variable names are full snake_case (no camelCase, no abbreviations)",
+    "checker_id": "naming_snake_no_abbrev",
+    "native_framing": "mixed",
+    "flippable": true,
+    "paraphrase_fix_note": "Both polarities must hold 'full names' constant (the checker scores camelCase=0, abbreviations=1, snake+full=3). Contrast axis = positive-statement vs prohibition, not the abbrev axis.",
+    "canonical": "Use snake_case for all variable names, no abbreviations",
+    "paraphrases": {
+      "positive": [
+        "use snake_case for all variable names, fully spelled out",
+        "write variable names in snake_case, fully spelled out",
+        "name variables in snake_case, fully spelled out",
+        "keep variable names snake_case, fully spelled out"
+      ],
+      "negation": [
+        "don't write variable names in camelCase, fully spelled out",
+        "never use camelCase for variable names, fully spelled out",
+        "don't name variables in camelCase, fully spelled out",
+        "no variable name should be camelCase, fully spelled out"
+      ]
+    }
+  },
+
+  "testing_parametrize": {
+    "behavioral_target": "no duplicated near-identical test bodies (parametrize, single, or distinct tests)",
+    "checker_id": "testing_parametrize",
+    "native_framing": "positive",
+    "flippable": true,
+    "checker_fix_note": "Requires CHECKERS_VERSION 2 (_check_parametrize scores duplication, not @parametrize presence). Without v2 the negation arm scores 2 for a single test.",
+    "canonical": "Use pytest.mark.parametrize for all test variants",
+    "paraphrases": {
+      "positive": [
+        "use pytest.mark.parametrize for all test variants",
+        "drive test variants with pytest.mark.parametrize",
+        "parametrize tests that would otherwise share a body",
+        "use parametrize to cover multiple test cases in one function"
+      ],
+      "negation": [
+        "don't write repetitive separate test functions",
+        "never copy-paste near-identical test functions",
+        "don't duplicate the same test body across functions",
+        "avoid writing the same test logic multiple times"
+      ]
+    }
+  },
+
+  "architecture_extend": {
+    "flippable": false,
+    "excluded_reason": "Base-class modification is undetectable from the response snippet (no base in scope). A standalone function satisfies the negation but not the positive -> no clean binary.",
+    "checker_id": "architecture_extend",
+    "canonical": "Don't modify the base class, extend it with a subclass"
+  },
+
+  "code_style_listcomp": {
+    "flippable": false,
+    "excluded_reason": "A plain for-loop satisfies 'don't use map/filter' but not 'use a comprehension' -> positive and negation target different compliant sets; no clean binary.",
+    "checker_id": "code_style_listcomp",
+    "canonical": "Use list comprehensions, not map/filter"
+  },
+
+  "docs_numpy_style": {
+    "flippable": false,
+    "excluded_reason": "Docstring style is 3-way (numpy/google/none); 'not Google-style' is not equivalent to 'NumPy-style' -> not a negatable binary.",
+    "checker_id": "docs_numpy_style",
+    "canonical": "Use NumPy-style docstrings for all new functions"
+  }
+}

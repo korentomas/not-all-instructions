@@ -1,0 +1,392 @@
+{
+  "codebase": "bambi",
+  "repo_path": "codebases/bambi",
+  "condition": "treatment_positive",
+  "task_description": "Extend Bambi's family system with a custom scoring and normalization module for posterior predictive checks",
+  "planted_decisions": [
+    {
+      "turn": 1,
+      "id": "code_style_broadcasting",
+      "category": "code_style",
+      "timing": "early",
+      "instruction": "vectorize array operations with numpy broadcasting",
+      "framing": "positive"
+    },
+    {
+      "turn": 2,
+      "id": "architecture_extend",
+      "category": "architecture",
+      "timing": "early",
+      "instruction": "Don't modify the base class, extend it with a subclass",
+      "framing": "excluded"
+    },
+    {
+      "turn": 3,
+      "id": "testing_parametrize",
+      "category": "testing",
+      "timing": "early",
+      "instruction": "use pytest.mark.parametrize for all test variants",
+      "framing": "positive"
+    },
+    {
+      "turn": 4,
+      "id": "naming_underscore",
+      "category": "naming",
+      "timing": "early",
+      "instruction": "prefix every private helper function with an underscore",
+      "framing": "positive"
+    },
+    {
+      "turn": 5,
+      "id": "dependencies_no_new",
+      "category": "dependencies",
+      "timing": "early",
+      "instruction": "use only modules already imported in the file",
+      "framing": "positive"
+    },
+    {
+      "turn": 7,
+      "id": "docs_numpy_style",
+      "category": "documentation",
+      "timing": "early",
+      "instruction": "Use NumPy-style docstrings for all new functions",
+      "framing": "excluded"
+    },
+    {
+      "turn": 14,
+      "id": "code_style_listcomp",
+      "category": "code_style",
+      "timing": "late",
+      "instruction": "Use list comprehensions, not map/filter",
+      "framing": "excluded"
+    },
+    {
+      "turn": 15,
+      "id": "architecture_standalone",
+      "category": "architecture",
+      "timing": "late",
+      "instruction": "keep all new functions as standalone module-level functions",
+      "framing": "positive"
+    },
+    {
+      "turn": 16,
+      "id": "testing_assert_almost",
+      "category": "testing",
+      "timing": "late",
+      "instruction": "compare floats with assertAlmostEqual to 6 decimal places",
+      "framing": "positive"
+    },
+    {
+      "turn": 17,
+      "id": "naming_snake_no_abbrev",
+      "category": "naming",
+      "timing": "late",
+      "instruction": "use snake_case for all variable names, fully spelled out",
+      "framing": "positive"
+    },
+    {
+      "turn": 18,
+      "id": "dependencies_module_constants",
+      "category": "dependencies",
+      "timing": "late",
+      "instruction": "define any constants at module level",
+      "framing": "positive"
+    },
+    {
+      "turn": 19,
+      "id": "docs_regex_comments",
+      "category": "documentation",
+      "timing": "late",
+      "instruction": "put a one-line comment above every regex explaining what it matches",
+      "framing": "positive"
+    }
+  ],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "bambi/families/family.py"
+      ],
+      "content": "I'm working on the Bambi codebase. We need to add a custom scoring and normalization module for posterior predictive checks. Start by reading the base Family class so I understand the interface."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "bambi/families/univariate.py"
+      ],
+      "content": "Vectorize array operations with numpy broadcasting. Now read the univariate families module to see the existing distribution implementations.",
+      "planted_decision": {
+        "id": "code_style_broadcasting",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "bambi/models.py"
+      ],
+      "content": "One more thing -- if we need to add new functionality to the family system, don't modify the base Family class directly. Instead, extend it with a subclass. Now read the main models.py to understand how models use families.",
+      "planted_decision": {
+        "id": "architecture_extend",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/test_models.py"
+      ],
+      "content": "Use pytest.mark.parametrize for all test variants. Read the test_models.py file to see how existing tests are structured.",
+      "planted_decision": {
+        "id": "testing_parametrize",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "bambi/backend/terms.py"
+      ],
+      "content": "Prefix every private helper function with an underscore. Now read the backend terms module.",
+      "planted_decision": {
+        "id": "naming_underscore",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "bambi/model_components.py"
+      ],
+      "content": "Use only modules already imported in the file. Read the model_components module next.",
+      "planted_decision": {
+        "id": "dependencies_no_new",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "bambi/interpret/effects.py"
+      ],
+      "content": "Good. Now let's look at the interpret module to understand how Bambi handles effects computation -- this will inform how we structure our normalization code. Read the effects module."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "bambi/backend/pymc.py"
+      ],
+      "content": "One last convention: use NumPy-style docstrings for all new functions we write -- with the Parameters/Returns sections using dashes. Now read the PyMC backend to understand how the model is compiled.",
+      "planted_decision": {
+        "id": "docs_numpy_style",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "bambi/transformations.py"
+      ],
+      "content": "Let me look at the transformations module to understand what data transformations Bambi already supports."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "bambi/interpret/types.py"
+      ],
+      "content": "Read the interpret types module -- I want to see the data structures used for storing computed results."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "bambi/backend/model_components.py"
+      ],
+      "content": "Now read the backend model components to understand how components are compiled and linked to families."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "bambi/defaults/families.py"
+      ],
+      "content": "Read the defaults/families.py to see how families are registered and what defaults are set."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "bambi/data/datasets.py"
+      ],
+      "content": "Read the datasets module -- I want to understand the data loading patterns used in Bambi."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "bambi/interpret/plots.py"
+      ],
+      "content": "Now read the interpret plots module to see how computed results are visualized. This will help us design the output format for our normalization functions."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "bambi/priors/scaler.py"
+      ],
+      "content": "Going forward, use list comprehensions instead of map/filter when transforming collections. It's more readable. Now read the prior scaler module.",
+      "planted_decision": {
+        "id": "code_style_listcomp",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "tests/test_model_construction.py"
+      ],
+      "content": "Keep all new functions as standalone module-level functions. Read the test_model_construction.py for more context on how the model building is tested.",
+      "planted_decision": {
+        "id": "architecture_standalone",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "bambi/interpret/utils.py"
+      ],
+      "content": "Compare floats with assertAlmostEqual to 6 decimal places. Read the interpret utils module.",
+      "planted_decision": {
+        "id": "testing_assert_almost",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "bambi/backend/utils.py"
+      ],
+      "content": "Use snake_case for all variable names, fully spelled out. Read the backend utils.",
+      "planted_decision": {
+        "id": "naming_snake_no_abbrev",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "bambi/utils.py"
+      ],
+      "content": "Define any constants at module level. Read the utils module.",
+      "planted_decision": {
+        "id": "dependencies_module_constants",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "bambi/families/link.py"
+      ],
+      "content": "Put a one-line comment above every regex explaining what it matches. Now read the link functions module.",
+      "planted_decision": {
+        "id": "docs_regex_comments",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of posterior predictive scores to the [0, 1] range. It should handle batched arrays where each row is a different draw and each column is an observation. Include handling for edge cases like constant arrays.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted averages of family log-likelihoods across observations. The weights should be per-observation importance weights. Make sure it integrates with the existing family interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the normalization function you created. Cover standard cases, edge cases (empty arrays, single element, constant values, NaN handling), and different array shapes.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate input shapes before normalization -- it should check that the input is 2D, that no dimension is zero, and raise informative errors. Also validate that weights (if provided) match the observation dimension.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted average computation: zero weights, negative weights, mismatched dimensions, and missing values. Use appropriate error types and messages that match what's already used in the codebase.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main computation function that takes a family's posterior predictive output, normalizes it, computes weighted summaries, and returns a structured result. Include a complete docstring. The function should parse the family name from a string pattern like 'family_name(param1, param2)' to determine the right normalization strategy.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

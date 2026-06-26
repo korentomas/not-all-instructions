@@ -1,0 +1,392 @@
+{
+  "codebase": "arviz",
+  "repo_path": "codebases/arviz-stats",
+  "condition": "treatment_negation",
+  "task_description": "Add custom convergence diagnostics with weighted R-hat and bulk/tail ESS normalization to ArviZ stats",
+  "planted_decisions": [
+    {
+      "turn": 1,
+      "id": "code_style_broadcasting",
+      "category": "code_style",
+      "timing": "early",
+      "instruction": "never touch an array except as a whole with numpy",
+      "framing": "negation"
+    },
+    {
+      "turn": 2,
+      "id": "architecture_extend",
+      "category": "architecture",
+      "timing": "early",
+      "instruction": "Don't modify the base class, extend it with a subclass",
+      "framing": "excluded"
+    },
+    {
+      "turn": 3,
+      "id": "testing_parametrize",
+      "category": "testing",
+      "timing": "early",
+      "instruction": "never copy-paste near-identical test functions",
+      "framing": "negation"
+    },
+    {
+      "turn": 4,
+      "id": "naming_underscore",
+      "category": "naming",
+      "timing": "early",
+      "instruction": "never expose a private helper without an underscore prefix",
+      "framing": "negation"
+    },
+    {
+      "turn": 5,
+      "id": "dependencies_no_new",
+      "category": "dependencies",
+      "timing": "early",
+      "instruction": "never introduce an import that isn't already present",
+      "framing": "negation"
+    },
+    {
+      "turn": 7,
+      "id": "docs_numpy_style",
+      "category": "documentation",
+      "timing": "early",
+      "instruction": "Use NumPy-style docstrings for all new functions",
+      "framing": "excluded"
+    },
+    {
+      "turn": 14,
+      "id": "code_style_listcomp",
+      "category": "code_style",
+      "timing": "late",
+      "instruction": "Use list comprehensions, not map/filter",
+      "framing": "excluded"
+    },
+    {
+      "turn": 15,
+      "id": "architecture_standalone",
+      "category": "architecture",
+      "timing": "late",
+      "instruction": "never attach new functionality as a class method",
+      "framing": "negation"
+    },
+    {
+      "turn": 16,
+      "id": "testing_assert_almost",
+      "category": "testing",
+      "timing": "late",
+      "instruction": "never assert floats without assertAlmostEqual or approx",
+      "framing": "negation"
+    },
+    {
+      "turn": 17,
+      "id": "naming_snake_no_abbrev",
+      "category": "naming",
+      "timing": "late",
+      "instruction": "never use camelCase for variable names, fully spelled out",
+      "framing": "negation"
+    },
+    {
+      "turn": 18,
+      "id": "dependencies_module_constants",
+      "category": "dependencies",
+      "timing": "late",
+      "instruction": "never define a constant inside a function instead of at module level",
+      "framing": "negation"
+    },
+    {
+      "turn": 19,
+      "id": "docs_regex_comments",
+      "category": "documentation",
+      "timing": "late",
+      "instruction": "never write a regex without a comment above explaining it",
+      "framing": "negation"
+    }
+  ],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "src/arviz_stats/base/diagnostics.py"
+      ],
+      "content": "I'm working on the ArviZ stats library. We need to add custom convergence diagnostics with weighted R-hat and bulk/tail ESS normalization. Start by reading the base diagnostics module."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "src/arviz_stats/base/array.py"
+      ],
+      "content": "Never touch an array except as a whole with numpy. Now read the base array module to see the existing array operations.",
+      "planted_decision": {
+        "id": "code_style_broadcasting",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "src/arviz_stats/summary.py"
+      ],
+      "content": "When we add new diagnostic functionality, don't modify the existing base classes directly. Extend them with subclasses instead. Read the summary module to understand how diagnostics are aggregated.",
+      "planted_decision": {
+        "id": "architecture_extend",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/base/test_array.py"
+      ],
+      "content": "Never copy-paste near-identical test functions. Read the test_array.py to see existing test patterns.",
+      "planted_decision": {
+        "id": "testing_parametrize",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "src/arviz_stats/base/dataarray.py"
+      ],
+      "content": "Never expose a private helper without an underscore prefix. Read the dataarray module next.",
+      "planted_decision": {
+        "id": "naming_underscore",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "src/arviz_stats/loo/helper_loo.py"
+      ],
+      "content": "Never introduce an import that isn't already present. Read the LOO helper module for reference.",
+      "planted_decision": {
+        "id": "dependencies_no_new",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "src/arviz_stats/base/density.py"
+      ],
+      "content": "Read the density estimation module -- we may need kernel density estimation for some of our diagnostic visualizations."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "src/arviz_stats/sampling_diagnostics.py"
+      ],
+      "content": "Use NumPy-style docstrings for all new functions -- with Parameters/Returns sections using dashes underneath. Read the sampling diagnostics module to see how diagnostic functions are documented.",
+      "planted_decision": {
+        "id": "docs_numpy_style",
+        "timing": "early"
+      }
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_moment_match.py"
+      ],
+      "content": "Read the LOO moment matching module to understand how ArviZ handles iterative statistical computations."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "src/arviz_stats/metrics.py"
+      ],
+      "content": "Read the metrics module to see what model comparison metrics are already implemented."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "src/arviz_stats/loo/compare.py"
+      ],
+      "content": "Read the LOO compare module to understand how model comparison results are structured."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_subsample.py"
+      ],
+      "content": "Read the LOO subsample module for understanding how ArviZ handles subsampling in large datasets."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "src/arviz_stats/visualization.py"
+      ],
+      "content": "Read the visualization module to understand how diagnostic results are formatted for plotting."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "src/arviz_stats/base/core.py"
+      ],
+      "content": "Read the base core module to see the fundamental statistical operations available."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "src/arviz_stats/accessors.py"
+      ],
+      "content": "From now on, use list comprehensions instead of map/filter for collection transformations. Read the accessors module.",
+      "planted_decision": {
+        "id": "code_style_listcomp",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "tests/loo/test_helper_loo.py"
+      ],
+      "content": "Never attach new functionality as a class method. Read the LOO test helper file.",
+      "planted_decision": {
+        "id": "architecture_standalone",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "src/arviz_stats/loo/loo_expectations.py"
+      ],
+      "content": "Never assert floats without assertAlmostEqual or approx. Read the LOO expectations module.",
+      "planted_decision": {
+        "id": "testing_assert_almost",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "src/arviz_stats/loo/loo.py"
+      ],
+      "content": "Never use camelCase for variable names, fully spelled out. Read the main LOO module.",
+      "planted_decision": {
+        "id": "naming_snake_no_abbrev",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "src/arviz_stats/ecdf_utils.py"
+      ],
+      "content": "Never define a constant inside a function instead of at module level. Read the ECDF utils module.",
+      "planted_decision": {
+        "id": "dependencies_module_constants",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "tests/conftest.py"
+      ],
+      "content": "Never write a regex without a comment above explaining it. Read the test conftest for testing conventions.",
+      "planted_decision": {
+        "id": "docs_regex_comments",
+        "timing": "late"
+      }
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of R-hat diagnostic values across multiple chains. It should take a 2D array where rows are parameters and columns are chain splits, and return per-parameter normalized diagnostics in [0, 1]. Handle edge cases like chains with zero variance.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted effective sample sizes. The function should accept per-draw importance weights and compute a weighted ESS that accounts for weight variability. Make sure it integrates with the existing diagnostics interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the R-hat normalization function. Cover standard convergence scenarios, edge cases (single chain, single parameter, constant chains, NaN values), and verify numerical accuracy of the results.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate the shape and contents of MCMC chain arrays before computing diagnostics. It should check dimensionality, minimum chain length, and that values are finite. Raise informative errors for each failure mode.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted ESS computation: zero weights, negative weights, single-draw chains, and missing values. Use error types consistent with what ArviZ already uses.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main diagnostic computation function that takes raw MCMC chains, normalizes R-hat values, computes weighted ESS, and returns a structured diagnostic summary. Include a complete docstring. The function should parse chain metadata from a string pattern like 'chain[0]:param_name' to identify parameters.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

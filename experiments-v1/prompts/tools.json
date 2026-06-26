@@ -1,0 +1,16 @@
+[
+  {
+    "name": "search_web",
+    "description": "Search the web for current information on a topic. Use this for any factual question.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The search query"
+        }
+      },
+      "required": ["query"]
+    }
+  }
+]

@@ -1,0 +1,452 @@
+% Extended paper (journal). Builds on the JAIIO/ASAID 2026 camera-ready (the v1 study).
+% Canonical model: M8 (hierarchical ordered-logit + model x instruction interaction).
+\documentclass{llncs}
+
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[htt]{hyphenat}
+\emergencystretch=1.5em
+\graphicspath{{figures/}{../report-figures/v6/}}
+\usepackage[style=apa]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\title{Not All Instructions Are Forgotten Equal: Per-Instruction
+Retention Is a Model-by-Instruction Interaction}
+\titlerunning{Not All Instructions Are Forgotten Equal}
+\author{Tom\'as P. Korenblit\orcidID{0009-0002-5682-8475}}
+\authorrunning{T. P. Korenblit}
+\institute{Universidad Nacional de San Mart\'in, Buenos Aires, Argentina\\
+\email{tomaskorenblit@gmail.com}}
+\maketitle
+
+\begin{abstract}
+Large language models lose adherence to user-stated preferences over long
+conversations, and the common defense, restating every instruction each
+turn, is expensive and indiscriminate. Whether a selective alternative is
+possible depends on how retention is structured across instructions and
+models. We measure per-instruction compliance in realistic multi-turn
+coding sessions across five models, twelve instruction types, and three
+open-source Python codebases, graded by deterministic checkers, and we
+compare a ladder of Bayesian ordered-logistic models. The decisive
+structure is neither a per-instruction main effect nor a per-model main
+effect but their \emph{interaction}: a model that adds a
+model-by-instruction interaction term improves out-of-sample fit by about
+59 ELPD (five standard errors) over additive models, while additive
+per-model terms add nothing. Which instruction is retained depends on the
+model. We also find that the ``backfire'' reported in the conference version
+of this study, where stating one instruction lowered compliance, does not
+survive: it is a measurement artifact, confirmed both by a corrected checker
+and by a negation-versus-positive framing experiment that finds no effect of
+polarity. We argue that the recommended model, a hierarchical Bayesian
+graded-response model with a model-by-instruction interaction, is the
+appropriate analysis for evaluation data generally, and that reporting raw
+means or additive effects mischaracterizes what evaluations measure. The
+finding matters most for agents deployed in long-running loops without human
+oversight, where a guardrail that decays does so silently.
+\keywords{instruction retention \and item response theory \and Bayesian
+inference \and model evaluation \and AI safety}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Language models are increasingly deployed as autonomous agents that run in
+loops, call tools, and act over hundreds of turns with no human reviewing
+each step. An agent is governed by its instructions: the operational limits
+and safety guardrails it is given, usually once and at the start, that must
+hold for the whole run. Yet adherence to instructions erodes as the context
+grows, a phenomenon we refer to as \emph{context rot}. \textcite{laban2025}
+measured average compliance drops of 39\% across 15 models in multi-turn
+settings. The cause is architectural: attention is not uniformly
+distributed across the context window, and information in middle positions
+receives less weight than at the boundaries \parencite{liu2024,
+chowdhury2026}. An instruction stated once and then buried under
+accumulating tool output competes for attention against everything that
+follows it, and in a deployed loop there is no user to notice the lapse and
+restate it.
+
+This is a safety concern before it is a cost concern. When the model drops a
+preference, a chat user notices and restates it; a deployed agent has no
+such supervisor, so a guardrail that decays does so silently while the agent
+keeps acting through tools whose effects are real and often irreversible
+\parencite{mu2025}. Repeating every instruction each turn, the standard
+mitigation, multiplies prompt cost and still cannot tell an operator which
+constraint remains in force. Because safety is conjunctive, an aggregate
+compliance rate says nothing about whether the one rule that matters is
+among those that lapsed.
+
+Whether reinforcement can be targeted instead of uniform depends on how
+retention is structured. The conference version of this work
+\parencite{korenblit2026} fit a per-instruction Bayesian model to a
+single-model dataset and reported that retention varies widely across
+instructions, that one instruction was harmed by being stated, and that the
+model and codebase explained little variance. This paper revisits those
+claims with a larger, multi-model dataset, a corrected scoring pipeline, a
+framing experiment, and a wider model comparison. The picture changes.
+
+Our contributions are: (i) we show that per-instruction retention is
+governed by a \emph{model-by-instruction interaction}, not by a main effect
+of either factor: an interaction model improves leave-one-out fit by about
+59 ELPD over additive models, and additive per-model terms add nothing;
+(ii) we show that the reported ``backfire'' is a measurement artifact, with
+two independent lines of evidence (a corrected checker and a
+polarity-framing experiment); (iii) we quantify how fragile
+variance-component conclusions are to the pool of models analyzed, and which
+conclusions survive; and (iv) we argue, and demonstrate on this dataset,
+that a hierarchical Bayesian graded-response model with a
+model-by-instruction interaction is the appropriate default for analyzing
+evaluation data, situating it against item-response-theory and
+generalizability-theory practice.
+
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Instruction degradation in long contexts.}
+Several studies establish that adherence falls as conversations grow.
+\textcite{laban2025} report an average 39\% compliance drop across 15
+models; \textcite{he2024} show multi-instruction accuracy falling within
+three turns; \textcite{du2025} find that a larger context window does not by
+itself fix the loss. None asks whether different instructions are retained
+to different degrees. On mechanism, \textcite{liu2024} document a U-shaped
+positional attention curve and \textcite{mu2025} a saturation effect.
+Existing mitigations reinforce uniformly: periodic reminders
+\parencite{dongre2025} and prompt repetition \parencite{leviathan2025},
+which can be counterproductive for instructions where restating degrades
+compliance.
+
+\paragraph{Evaluation as measurement, and item response theory.}
+A parallel literature argues that benchmark scores should be treated as
+measurements with uncertainty rather than raw means.
+\textcite{miller2024errorbars} imports experiment-analysis machinery
+(standard errors, clustering, paired differences); \textcite{bowyer2025clt}
+shows the normal approximation fails at the small sample sizes typical of
+specialized evals. Construct-validity work \parencite{bean2025construct}
+finds widespread operationalization failures across benchmarks, and
+generalizability theory has been applied to decompose LLM-scoring variance
+across facets \parencite{song2025gtheory, brennan2001gtheory}. Ranking is
+increasingly treated as estimation, with Bradley--Terry models and
+confidence intervals \parencite{chiang2024arena}. Item response theory
+casts systems as examinees with a latent ability and items as having
+difficulty and discrimination \parencite{lalor2016irt,
+deboeck2004explanatory, samejima1969grm}; it has been used to build
+evaluation scales, reweight leaderboards
+\parencite{rodriguez2021leaderboards}, compare test sets
+\parencite{vania2021testsets}, and build efficient benchmarks
+\parencite{polo2024tinybenchmarks}. This work is almost entirely on binary
+correct/incorrect outcomes and estimated by variational approximation; the
+one graded-response application we are aware of targets judge reliability,
+not the systems under test \parencite{choi2026judgeirt}. Our model sits in
+the explanatory-IRT tradition \parencite{deboeck2004explanatory} with
+crossed random effects \parencite{baayen2008crossed}, but treats responses
+as ordinal, casts the experimental manipulation as a covariate on ability,
+and estimates the full hierarchy by MCMC.
+
+\paragraph{Tracking what a model has forgotten.}
+Bayesian Knowledge Tracing \parencite{corbett1994} estimates per-concept
+mastery from response sequences. We adapt the framing: the model is the
+student and its instructions are the concepts. A reinforcement scheme would
+only be worthwhile if retention is heterogeneous and predictable, which is
+what we test.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Decision planting}
+We simulate a coding assistant working on a real open-source codebase over
+25 turns. Real source files are injected at turns 0--19, building context
+pressure. In the \textbf{treatment} condition, 12 coding preferences are
+embedded as casual inline requests in the user's messages, six early
+(turns 1--7) and six late (turns 14--19), spanning code style, architecture,
+testing, naming, dependencies, and documentation. They are phrased as
+natural user preferences, not system-prompt rules (e.g., ``Important: when
+writing array operations for this project, always use NumPy broadcasting
+instead of for loops''). The \textbf{baseline} condition is identical but
+plants nothing, measuring spontaneous compliance against the same probes. At
+turns 20--25 the user requests code-generation tasks that elicit each
+decision; each test turn probes two decisions, one early and one late.
+
+To separate an instruction's content from its phrasing, two further arms
+hold meaning constant and vary only polarity: \textbf{positive} and
+\textbf{negation} paraphrases of each flippable instruction. The framing
+effect is estimated arm against arm, since the canonical treatment wording
+differs from both by more than polarity.
+
+\subsection{Compliance measurement}
+Each decision is scored by a deterministic checker that parses the generated
+code with pattern matching, with no LLM in the scoring loop, so results are
+reproducible across runs. Each checker emits an ordinal 0--3 score
+(0 = ignored, 3 = fully followed) or abstains ($-1$, excluded) when the code
+gives no opportunity to apply the rule. The conference study's
+\texttt{no\_new\_imports} checker counted any import statement as new; the
+corrected checker treats re-showing an already-imported module as compliant
+(\S\ref{sec:backfire}). As a secondary channel, a panel of three
+cross-family LLM judges scores the same outputs blind to condition and
+model; no judge shares a family with a candidate, removing the conference
+study's self-judging bias. We report checker--judge agreement in
+\S\ref{sec:validity}.
+
+\subsection{A ladder of Bayesian models}
+\label{sec:models}
+We model the ordinal scores with hierarchical ordered-logistic
+(cumulative-link) regression, comparing five specifications of increasing
+structure by leave-one-out cross-validation \parencite{vehtari2017loo}. Let
+$d$ index decision, $m$ model, $k$ codebase, and let $t_i$ be the treatment
+indicator. All effects use non-centered parameterizations and offset
+cutpoints; priors follow standard weakly-informative choices for ordinal
+models \parencite{mcelreath2020rethinking, burkner2021irt}.
+
+\textbf{M0} (the conference model) is per-decision only:
+$\eta_i = \alpha_{d} + \beta_{d}\, t_i$, with $\alpha_d, \beta_d$ given
+hierarchical priors. \textbf{M4} adds additive per-model and per-codebase
+intercepts and a per-model treatment slope:
+$\eta_i = \alpha_d + \beta_d t_i + g_m + t_i\, s_m + g_k$. \textbf{M\_corr}
+draws $(g_m, s_m)$ from a correlated bivariate normal (LKJ prior).
+\textbf{M\_irt} is an explanatory graded-response model: it replaces the
+additive per-model intercept with a multiplicative discrimination term,
+$\eta_i = b_d + a_d\,\theta_m + \beta_d t_i + g_k$, where $\theta_m$ is a
+latent model ability and $a_d>0$ a per-instruction discrimination, the IRT
+form of a model-by-instruction interaction. \textbf{M8} keeps the additive
+structure of M4 and adds an identifiable interaction \emph{variance
+component}: a per-cell treatment effect
+$z_{m,d}\sim\mathcal{N}(0, \sigma_{\text{int}})$, so
+$\eta_i = \alpha_d + \beta_d t_i + g_m + t_i s_m + g_k + t_i\, z_{m,d}$. The
+key scientific parameter shifts from $\sigma_\beta$ (spread of
+per-instruction effects) to $\sigma_{\text{int}}$ (spread of the
+model-by-instruction interaction). A variance-component interaction is
+preferred to a rank-1 factor model, which is unidentified up to sign and
+scale; the factor version did not converge ($\hat R = 1.74$), while M8
+samples cleanly. Fit in PyMC \parencite{pymc2023} with NUTS via nutpie
+\parencite{nutpie2024, hoffman2014}, four chains, 2000 draws each,
+\texttt{target\_accept} $= 0.99$.
+
+\section{Experimental setup}
+\label{sec:setup}
+Three open-source Python libraries span a range of context pressure: Bambi
+(median peak $\approx$85K tokens by the test turns), ArviZ ($\approx$149K),
+and PyMC ($\approx$187K). Five instruction-following models were evaluated
+with both baseline and treatment in every codebase: Qwen 3.5 (27B),
+Gemini 3.1 Flash Lite, GPT-5.4-nano, Nemotron 3 Super (120B), and
+Gemma 4 (26B). Each condition was run for five epochs to average per-call
+stochasticity. After excluding abstentions, the primary dataset is 1{,}067
+compliance observations across 5 models, 12 decision types, 3 codebases, and
+2 conditions; the framing arms add a further set across three of the models.
+The pipeline is a port to the Inspect evaluation framework; the conference
+study used a bespoke runner with a single baseline model and a same-family
+judge.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Retention is heterogeneous}
+The per-instruction treatment effect varies substantially: in the additive
+model its group-level standard deviation is $\sigma_\beta = 1.19$ (94\% HDI
+$[0.55, 1.99]$), excluding zero. Five to seven of the twelve instructions,
+depending on specification, have a treatment effect whose interval excludes
+zero (Fig.~\ref{fig:beta}); the strongest are
+\texttt{dependencies\_module\_constants}, \texttt{docs\_regex\_comments},
+\texttt{testing\_parametrize}, and \texttt{docs\_numpy\_style}. This is
+about half the magnitude reported by the conference study
+($\sigma_\beta = 2.11$); \S\ref{sec:interaction} explains why.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{fig_beta_forest}
+\caption{Per-instruction treatment effect $\beta$ with 94\% HDI (additive
+model, clean five-model set). Gold: interval above zero; grey: crosses
+zero. The conference study's $-2.36$ ``backfire'' on
+\texttt{dependencies\_no\_new} is gone (bottom).}
+\label{fig:beta}
+\end{figure}
+
+\subsection{The structure is a model-by-instruction interaction}
+\label{sec:interaction}
+Comparing the model ladder by leave-one-out cross-validation
+(Table~\ref{tab:loo}, Fig.~\ref{fig:loo}) gives a single clear result. The
+two models that capture a model-by-instruction interaction, M8 and M\_irt,
+fit decisively better than every additive model, by about 59 ELPD (more
+than five standard errors). The two interaction models are not
+distinguishable from each other ($\Delta$ELPD $= 9.5 \pm 10.5$), so it is
+the interaction that matters, not its exact parameterization. Crucially, the
+additive per-model terms add nothing: M4 (per-model intercept and slope) is
+indistinguishable from M0 (per-decision only), and allowing the model
+intercept and slope to correlate (M\_corr) does not help; the estimated
+correlation is $-0.37$ (94\% HDI $[-0.97, 0.35]$), so a model that complies
+more by default is not more reinforceable.
+
+\begin{table}[t]
+\centering
+\caption{Model comparison by leave-one-out cross-validation (clean
+five-model set, 1{,}067 observations). Higher ELPD is better;
+$\Delta$ELPD is the difference from the best model with its standard
+error.}
+\label{tab:loo}
+\begin{tabular}{llrr}
+\toprule
+Model & Interaction structure & ELPD & $\Delta$ELPD (SE) \\
+\midrule
+M8 & model$\times$instruction variance & $-545.9$ & --- \\
+M\_irt & 2PL discrimination $a_d\theta_m$ & $-555.4$ & $9.5\ (10.5)$ \\
+M\_corr & correlated per-model slopes & $-604.4$ & $58.5\ (11.2)$ \\
+M4 & additive per-model & $-604.8$ & $58.9\ (11.2)$ \\
+M0 & per-instruction only & $-607.2$ & $61.3\ (11.7)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_ladder_loo}
+\caption{Out-of-sample fit (ELPD, higher is better) with standard errors.
+The interaction models (teal) separate cleanly from the additive models
+(grey), which cluster together.}
+\label{fig:loo}
+\end{figure}
+
+Under M8 the interaction dominates: $\sigma_{\text{int}} = 1.84$ (94\% HDI
+$[1.26, 2.40]$), larger than the per-instruction spread
+($\sigma_\beta = 0.43$), the per-model intercept ($\sigma_{\text{model}} =
+0.66$), and the per-model slope ($\sigma_{t\text{-model}} = 0.43$); see
+Fig.~\ref{fig:m8var}. The additive components shrink once the interaction is
+in the model, because in additive specifications they absorb interaction
+variance. This also explains the halved $\sigma_\beta$ relative to the
+conference study: with a single model, the model-by-instruction interaction
+has nowhere to go and collapses into the per-instruction effect, inflating
+it. Fig.~\ref{fig:heat} shows the interaction directly: the conference
+study's primary model, Qwen, carries the most extreme cells, including the
+strongly negative \texttt{dependencies\_no\_new} cell that produced the
+original ``backfire.''
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\textwidth]{fig_m8_variance}
+\caption{Group-level standard deviations under M8. The
+model-by-instruction interaction $\sigma_{\text{int}}$ is the largest source
+of structured variation; the additive per-model and per-codebase terms are
+small.}
+\label{fig:m8var}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_interaction_heatmap}
+\caption{Posterior mean of the model-by-instruction interaction $z_{m,d}$
+(log-odds). Red raises, blue lowers compliance for that pair beyond the
+additive effects. Retention is a (model, instruction) property: which
+instruction is retained depends on the model.}
+\label{fig:heat}
+\end{figure}
+
+\subsection{The reported backfire is a measurement artifact}
+\label{sec:backfire}
+The conference study reported that stating \texttt{dependencies\_no\_new}
+(``do not add new imports'') \emph{lowered} compliance, $\beta = -2.36$. Two
+independent analyses show this is not real. First, the original checker
+counted any import statement as new, including imports already present in the
+files shown to the model; being told ``do not add imports'' plausibly makes
+a model re-show existing imports, which the checker then penalized. With a
+context-aware checker that only counts genuinely new modules, the effect is
+null ($\beta = -0.11$ to $-0.25$ across specifications, interval spanning
+zero). Second, the framing experiment finds no effect of polarity: the
+pooled negation-minus-positive effect is $0.36$ (94\% HDI $[-0.13, 0.89]$),
+and every per-instruction interval crosses zero, so phrasing the rule as a
+negation does not reduce compliance. The artifact is instructive for
+measurement: under M\_irt, \texttt{dependencies\_no\_new} has by far the
+highest discrimination ($a_d = 2.90$), i.e.\ it separates models most
+sharply, a reminder that a highly discriminating item can be measuring an
+artifact rather than the intended construct.
+
+\subsection{Variance components are pool-sensitive; rankings are not}
+\label{sec:sensitivity}
+The variance-component estimates depend on which models are pooled. Across
+the five-model, six-model, and ten-model sets, $\sigma_\beta$ ranges
+$1.0$--$1.7$ and $\sigma_{\text{model}}$ ranges $0.48$--$0.98$; the
+interaction conclusion and the per-instruction \emph{rankings} are stable,
+but the absolute magnitudes of the variance components are not. A
+power-scaling sensitivity analysis confirms that the variance components are
+prior-influenced (a consequence of having few groups), while the fixed
+effects are not. We therefore report rankings and the interaction structure
+as robust, and treat the variance magnitudes as estimates with genuine prior
+dependence.
+
+\subsection{Measurement validity}
+\label{sec:validity}
+Checker--judge agreement is weak: the quadratic-weighted $\kappa$ between the
+deterministic checker and the cross-family judge panel has a panel median of
+$0.13$, with individual judges from $0.03$ to $0.17$. Agreement is lowest on
+judgment-laden style and documentation decisions and higher on syntactically
+unambiguous ones, on which the robust effects sit. We read this as a limit on
+construct validity for the softer decisions, not as support for replacing the
+reproducible checker with a judge.
+
+\section{Discussion}
+
+The central result reframes the phenomenon. Per-instruction retention is not
+a property of the instruction alone, nor of the model alone, but of the
+(model, instruction) pair. An additive analysis, including the conference
+model and any report of per-instruction means, misattributes interaction
+variance to main effects and can manufacture artifacts like the
+``backfire,'' which was a single extreme cell of one model amplified by a
+checker bug. A reinforcement policy that follows from this is necessarily
+model-specific: there is no instruction-level ranking that transfers across
+models, because the ranking is itself a function of the model.
+
+For deployed agents the implication is direct. A guardrail is an instruction,
+and whether it survives a long run depends on the specific (model, guardrail)
+pair, not on a generic decay rate. An operator cannot read off from one model
+which constraints another model will drop, and an aggregate compliance number
+hides the interaction entirely. Per-instruction, per-model monitoring is the
+prerequisite for noticing silent decay.
+
+The methodological lesson generalizes beyond retention. Evaluation data is
+typically systems crossed with items, scored on graded rubrics, and the
+quantity of interest is often comparative. The model that fits this data
+well, a hierarchical Bayesian graded-response model with crossed effects and
+a model-by-instruction interaction, is exactly what the item-response and
+generalizability-theory traditions prescribe, yet current eval practice
+reports raw means or, at best, additive uncertainty. Our ladder shows the
+cost concretely: the additive models are 59 ELPD worse and miss the dominant
+structure. We suggest this model as a default for eval analysis and develop
+the argument in a companion paper.
+
+\section{Limitations}
+\label{sec:limitations}
+The variance components are prior-sensitive and pool-dependent
+(\S\ref{sec:sensitivity}); we report rankings and structure rather than
+leaning on the magnitudes. The framing arms cover three of the five models,
+so the polarity null is not full-factorial. Compliance is measured at turns
+20--25 only, a retention snapshot, not a decay curve; we do not estimate
+per-instruction forgetting rates. Checker--judge agreement is low on softer
+decisions (\S\ref{sec:validity}), a construct-validity limit. The selective
+reinforcement we motivate is not implemented as a closed-loop policy; we
+estimate the structure such a policy would exploit, not its closed-loop
+performance. Context length varies across codebases rather than being held
+constant, though the per-codebase variance is small.
+
+\section{Conclusion}
+Per-instruction retention in long coding conversations is governed by a
+model-by-instruction interaction: an interaction model fits about 59 ELPD
+better than additive models, additive per-model terms add nothing, and which
+instruction is retained depends on the model. The conference study's
+single-model design collapsed this interaction into an inflated
+per-instruction effect and, together with a checker artifact, produced a
+spurious ``backfire'' that does not replicate. The heterogeneity is real but
+smaller and differently shaped than first reported. Beyond the retention
+question, the analysis argues for a specific standard: evaluation data with
+systems crossed against graded items should be analyzed with a hierarchical
+Bayesian interaction model, not raw means.
+
+\subsubsection*{Use of large language models.}
+During the preparation of this work the author used a large language model
+(Claude) to improve the language and readability of the manuscript and to
+assist with analysis and figure code; all results were computed by the
+deterministic checkers and statistical models and verified by the author.
+
+\printbibliography
+
+\end{document}

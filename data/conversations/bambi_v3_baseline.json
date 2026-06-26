@@ -1,0 +1,247 @@
+{
+  "codebase": "bambi",
+  "repo_path": "codebases/bambi",
+  "condition": "baseline",
+  "task_description": "Extend Bambi's family system with a custom scoring and normalization module for posterior predictive checks",
+  "planted_decisions": [],
+  "test_turns": [
+    {
+      "turn": 20,
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "turn": 0,
+      "inject_files": [
+        "bambi/families/family.py"
+      ],
+      "content": "I'm working on the Bambi codebase. We need to add a custom scoring and normalization module for posterior predictive checks. Start by reading the base Family class so I understand the interface."
+    },
+    {
+      "turn": 1,
+      "inject_files": [
+        "bambi/families/univariate.py"
+      ],
+      "content": "Now let's look at the univariate families module to see the existing distribution implementations."
+    },
+    {
+      "turn": 2,
+      "inject_files": [
+        "bambi/models.py"
+      ],
+      "content": "Read the main models.py file to understand how models use families and how the fit/predict pipeline works."
+    },
+    {
+      "turn": 3,
+      "inject_files": [
+        "tests/test_models.py"
+      ],
+      "content": "Read the test_models.py file to see how existing families and models are tested."
+    },
+    {
+      "turn": 4,
+      "inject_files": [
+        "bambi/backend/terms.py"
+      ],
+      "content": "Now read the backend terms module to understand how model terms are compiled."
+    },
+    {
+      "turn": 5,
+      "inject_files": [
+        "bambi/model_components.py"
+      ],
+      "content": "Read the model_components module to see how components are structured and linked."
+    },
+    {
+      "turn": 6,
+      "inject_files": [
+        "bambi/interpret/effects.py"
+      ],
+      "content": "Good. Now let's look at the interpret module to understand how Bambi handles effects computation -- this will inform how we structure our normalization code. Read the effects module."
+    },
+    {
+      "turn": 7,
+      "inject_files": [
+        "bambi/backend/pymc.py"
+      ],
+      "content": "Now read the PyMC backend to understand how the model is compiled and how families interact with the backend."
+    },
+    {
+      "turn": 8,
+      "inject_files": [
+        "bambi/transformations.py"
+      ],
+      "content": "Let me look at the transformations module to understand what data transformations Bambi already supports."
+    },
+    {
+      "turn": 9,
+      "inject_files": [
+        "bambi/interpret/types.py"
+      ],
+      "content": "Read the interpret types module -- I want to see the data structures used for storing computed results."
+    },
+    {
+      "turn": 10,
+      "inject_files": [
+        "bambi/backend/model_components.py"
+      ],
+      "content": "Now read the backend model components to understand how components are compiled and linked to families."
+    },
+    {
+      "turn": 11,
+      "inject_files": [
+        "bambi/defaults/families.py"
+      ],
+      "content": "Read the defaults/families.py to see how families are registered and what defaults are set."
+    },
+    {
+      "turn": 12,
+      "inject_files": [
+        "bambi/data/datasets.py"
+      ],
+      "content": "Read the datasets module -- I want to understand the data loading patterns used in Bambi."
+    },
+    {
+      "turn": 13,
+      "inject_files": [
+        "bambi/interpret/plots.py"
+      ],
+      "content": "Now read the interpret plots module to see how computed results are visualized. This will help us design the output format for our normalization functions."
+    },
+    {
+      "turn": 14,
+      "inject_files": [
+        "bambi/priors/scaler.py"
+      ],
+      "content": "Let's continue. Read the prior scaler module to understand how priors are scaled."
+    },
+    {
+      "turn": 15,
+      "inject_files": [
+        "tests/test_model_construction.py"
+      ],
+      "content": "Read the test_model_construction.py for more context on how model building is validated."
+    },
+    {
+      "turn": 16,
+      "inject_files": [
+        "bambi/interpret/utils.py"
+      ],
+      "content": "Read the interpret utils module to see the utility functions used in interpretation."
+    },
+    {
+      "turn": 17,
+      "inject_files": [
+        "bambi/backend/utils.py"
+      ],
+      "content": "Read the backend utils module."
+    },
+    {
+      "turn": 18,
+      "inject_files": [
+        "bambi/utils.py"
+      ],
+      "content": "Read the main utils module to see what general utilities are available."
+    },
+    {
+      "turn": 19,
+      "inject_files": [
+        "bambi/families/link.py"
+      ],
+      "content": "Read the link functions module to understand how link functions are defined and used."
+    },
+    {
+      "turn": 20,
+      "inject_files": [],
+      "content": "Write a function that normalizes an array of posterior predictive scores to the [0, 1] range. It should handle batched arrays where each row is a different draw and each column is an observation. Include handling for edge cases like constant arrays.",
+      "tests_decisions": [
+        "code_style_broadcasting",
+        "code_style_listcomp"
+      ]
+    },
+    {
+      "turn": 21,
+      "inject_files": [],
+      "content": "Add a new method for computing weighted averages of family log-likelihoods across observations. The weights should be per-observation importance weights. Make sure it integrates with the existing family interface.",
+      "tests_decisions": [
+        "architecture_extend",
+        "architecture_standalone"
+      ]
+    },
+    {
+      "turn": 22,
+      "inject_files": [],
+      "content": "Write tests for the normalization function you created. Cover standard cases, edge cases (empty arrays, single element, constant values, NaN handling), and different array shapes.",
+      "tests_decisions": [
+        "testing_parametrize",
+        "testing_assert_almost"
+      ]
+    },
+    {
+      "turn": 23,
+      "inject_files": [],
+      "content": "Add a helper function to validate input shapes before normalization -- it should check that the input is 2D, that no dimension is zero, and raise informative errors. Also validate that weights (if provided) match the observation dimension.",
+      "tests_decisions": [
+        "naming_underscore",
+        "naming_snake_no_abbrev"
+      ]
+    },
+    {
+      "turn": 24,
+      "inject_files": [],
+      "content": "Add error handling for edge cases in the weighted average computation: zero weights, negative weights, mismatched dimensions, and missing values. Use appropriate error types and messages that match what's already used in the codebase.",
+      "tests_decisions": [
+        "dependencies_no_new",
+        "dependencies_module_constants"
+      ]
+    },
+    {
+      "turn": 25,
+      "inject_files": [],
+      "content": "Write the main computation function that takes a family's posterior predictive output, normalizes it, computes weighted summaries, and returns a structured result. Include a complete docstring. The function should parse the family name from a string pattern like 'family_name(param1, param2)' to determine the right normalization strategy.",
+      "tests_decisions": [
+        "docs_numpy_style",
+        "docs_regex_comments"
+      ]
+    }
+  ]
+}

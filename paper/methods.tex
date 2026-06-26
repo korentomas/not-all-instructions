@@ -1,0 +1,290 @@
+% Methods / position paper: a hierarchical Bayesian interaction model as a
+% standard for analyzing LLM evaluations. Case study reuses the retention data.
+\documentclass{llncs}
+
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[htt]{hyphenat}
+\emergencystretch=1.5em
+\graphicspath{{figures/}{../report-figures/v6/}}
+\usepackage[style=apa]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\title{Evaluations Are Crossed Designs: A Hierarchical Bayesian
+Interaction Model for Analyzing Model Evaluations}
+\titlerunning{Evaluations Are Crossed Designs}
+\author{Tom\'as P. Korenblit\orcidID{0009-0002-5682-8475}}
+\authorrunning{T. P. Korenblit}
+\institute{Universidad Nacional de San Mart\'in, Buenos Aires, Argentina\\
+\email{tomaskorenblit@gmail.com}}
+\maketitle
+
+\begin{abstract}
+Most language-model evaluations report a mean score, sometimes with a
+standard error. This discards three things the data contains: the scores
+are usually graded rather than binary, the design is models crossed with
+items, and models have item-specific strengths, a model-by-item
+interaction. We argue that the appropriate analysis is a hierarchical
+Bayesian graded-response model with crossed random effects for models and
+items and an explicit model-by-item interaction term, fit by MCMC. This sits
+in the explanatory item-response and generalizability-theory traditions but
+fills a gap: existing item-response work in machine learning is almost
+entirely binary, variational, and aimed at subselecting items rather than
+analyzing the systems under test. We demonstrate the model on a
+multi-turn instruction-retention evaluation, where a ladder of models shows
+the interaction term improving out-of-sample fit by about 59 ELPD (five
+standard errors) over additive specifications, while additive per-model
+terms add nothing. Reporting raw means or additive effects on this data
+misattributes interaction variance to main effects and manufactures a
+spurious finding that the interaction model dissolves. We give a concrete
+specification, priors, and a reporting checklist, and discuss when the model
+is and is not worth its cost.
+\keywords{model evaluation \and item response theory \and Bayesian
+inference \and generalizability theory \and measurement}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+A language-model evaluation produces a table: systems in rows, test items in
+columns, a score in each cell. The near-universal summary is a column mean
+per system, occasionally with a standard error \parencite{miller2024errorbars}.
+This summary throws away most of the structure in the table. First, the
+scores are frequently \emph{graded}: a rubric returns 0--3, a judge returns a
+Likert rating, a partial-credit checker returns degrees of compliance.
+Averaging treats these as interval-scaled, which they are not. Second, the
+design is \emph{crossed}: every system meets every item, so item difficulty
+and system ability are confounded in any per-system mean, and a system that
+draws an easier item subset looks better for free. Third, and most
+consequentially, systems have \emph{item-specific strengths}: a model strong
+on one task may be weak on another in a way not predicted by its average.
+This is a model-by-item interaction, and a mean by construction cannot see
+it.
+
+We argue for a specific analysis as a default: a hierarchical Bayesian
+graded-response model with crossed random effects for systems and items and
+an explicit model-by-item interaction term, estimated by MCMC. The
+ingredients are standard in psychometrics, item response theory (IRT)
+\parencite{samejima1969grm, deboeck2004explanatory}, crossed-effects modeling
+\parencite{baayen2008crossed}, and generalizability theory
+\parencite{brennan2001gtheory}, and are well supported by modern tooling
+\parencite{burkner2021irt, mcelreath2020rethinking, pymc2023}. What is new is
+assembling them for the evaluation setting: treating evaluation scores as
+ordinal, putting the experimental manipulation as a covariate on ability, and
+making the model-by-item interaction a first-class, identifiable term.
+
+Our contributions are: (i) we characterize evaluation data as a crossed,
+graded, interaction-bearing design and state the model that matches it;
+(ii) we show, on a real evaluation, that the interaction term is the dominant
+structure, $\approx$59 ELPD better than additive models, and that ignoring
+it (raw means or additive effects) produces a concrete, published error;
+(iii) we give a reproducible specification, including why an interaction
+variance component is preferable to a low-rank factor model on
+identifiability grounds; and (iv) we provide a reporting checklist and an
+honest account of the method's costs.
+
+\section{What the field does, and the gap}
+\label{sec:gap}
+
+Three lines of work move beyond the raw mean, each addressing one facet but
+not the whole.
+
+\paragraph{Uncertainty.} \textcite{miller2024errorbars} treats an eval as an
+experiment and imports standard errors, clustering, and paired differences;
+\textcite{bowyer2025clt} shows the normal approximation underestimates
+uncertainty at the small sample sizes typical of specialized evals. This
+fixes the error bar on a mean but keeps the mean: no item structure, no
+interaction.
+
+\paragraph{Item response theory.} IRT has been used to build evaluation
+scales \parencite{lalor2016irt}, reweight leaderboards by item
+informativeness \parencite{rodriguez2021leaderboards}, compare test sets
+\parencite{vania2021testsets}, and construct efficient benchmarks
+\parencite{polo2024tinybenchmarks}. This literature is almost entirely
+\emph{binary} (correct/incorrect), estimated by \emph{variational}
+approximation for scale, and aimed at \emph{item subselection} rather than
+analyzing the systems under test. The one graded-response application we
+found diagnoses judge reliability, not the systems being evaluated
+\parencite{choi2026judgeirt}.
+
+\paragraph{Measurement and ranking.} Construct-validity work asks whether
+benchmarks measure what they claim \parencite{bean2025construct};
+generalizability theory decomposes score variance across facets but in an
+ANOVA, non-generative form \parencite{song2025gtheory}; preference ranking
+uses Bradley--Terry with intervals \parencite{chiang2024arena} but for
+pairwise outcomes, not graded item scores. LLM-as-judge reliability is
+typically reported as raw agreement, which is not chance-corrected
+\parencite{zheng2023judge}.
+
+The gap is the intersection: no standard approach simultaneously (a) treats
+scores as \emph{ordinal}, (b) models systems and items as \emph{crossed with
+partial pooling}, and (c) includes an explicit \emph{model-by-item
+interaction}. The pieces exist in adjacent literatures; assembling them is
+the contribution.
+
+\section{The recommended model}
+\label{sec:model}
+
+Let $y_{i}\in\{0,\dots,K\}$ be the graded score for observation $i$ with
+system $m[i]$, item $d[i]$, and an optional experimental covariate $t_i$ (a
+condition, intervention, or treatment). The model is a cumulative-link
+(ordered-logistic) graded-response model,
+\[
+\Pr(y_i \le k) = \mathrm{logistic}(\kappa_k - \eta_i),\qquad
+\kappa_1 < \dots < \kappa_K,
+\]
+with linear predictor
+\[
+\eta_i = \alpha_{d[i]} + \beta_{d[i]}\, t_i
+       + g_{m[i]} + s_{m[i]}\, t_i
+       + z_{m[i],d[i]}\, t_i .
+\]
+Here $\alpha_d$ is per-item baseline difficulty, $\beta_d$ the per-item
+effect of the covariate, $g_m$ the per-system ability, $s_m$ the per-system
+covariate sensitivity, and $z_{m,d}\sim\mathcal{N}(0,\sigma_{\text{int}})$
+the \textbf{model-by-item interaction}. All group effects are non-centered;
+cutpoints use an offset parameterization; SDs take weakly-informative
+half-normal/exponential priors and correlations, where used, an LKJ prior
+\parencite{mcelreath2020rethinking, burkner2021irt}.
+
+Four choices deserve justification. \emph{Ordinal likelihood}: graded scores
+are not interval-scaled, so a cumulative link is the principled choice over a
+Gaussian or a binarization. \emph{Crossed effects}: systems and items are
+fully crossed, so crossed random intercepts remove the confound between item
+difficulty and system ability that a per-system mean carries; this also
+yields a generalizability-theory variance decomposition for free
+\parencite{brennan2001gtheory}. \emph{Interaction as a variance component}:
+the non-additivity can be written as a low-rank product $\lambda_m\varphi_d$
+(a factor / 2PL form), but that is unidentified up to sign and scale and in
+practice multimodal; the additive cell effect $z_{m,d}\sim\mathcal{N}(0,
+\sigma_{\text{int}})$ is fully identified, samples cleanly, and gives a
+single interpretable estimand, the interaction magnitude. \emph{Full
+Bayesian estimation}: MCMC propagates uncertainty into every downstream
+quantity, including system rankings, where overlapping intervals correctly
+read as ``tied''; partial pooling shrinks noisy per-cell estimates, the
+behavior that makes small-$n$ evals tractable.
+
+What the model returns that a mean does not: per-item and per-system effects
+with calibrated intervals; a variance decomposition (how much of the
+variation is item, system, interaction); model comparison by leave-one-out
+cross-validation \parencite{vehtari2017loo} to test whether structure is
+warranted; and, for judge-scored evals, a place to put rater effects and to
+report chance-corrected agreement rather than raw agreement.
+
+\section{Case study: the interaction is the structure}
+\label{sec:case}
+
+We apply the framework to a multi-turn instruction-retention evaluation
+\parencite{korenblit2026}: five models are scored on whether they retain
+twelve coding instructions across three codebases, under a baseline and a
+treatment (stating the instruction), on a 0--3 compliance scale, 1{,}067
+observations. We fit a ladder of increasingly structured models and compare
+them by leave-one-out cross-validation (Table~\ref{tab:loo},
+Fig.~\ref{fig:loo}).
+
+\begin{table}[t]
+\centering
+\caption{Leave-one-out comparison on the retention evaluation. Models with a
+model-by-item interaction (M8, M\_irt) fit far better than additive models.}
+\label{tab:loo}
+\begin{tabular}{llrr}
+\toprule
+Model & Structure & ELPD & $\Delta$ELPD (SE) \\
+\midrule
+M8 & + model$\times$item interaction (variance) & $-545.9$ & --- \\
+M\_irt & + 2PL discrimination $a_d\theta_m$ & $-555.4$ & $9.5\ (10.5)$ \\
+M\_corr & additive + correlated slopes & $-604.4$ & $58.5\ (11.2)$ \\
+M4 & additive per-model + per-item & $-604.8$ & $58.9\ (11.2)$ \\
+M0 & per-item only (no system structure) & $-607.2$ & $61.3\ (11.7)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_ladder_loo}
+\caption{Out-of-sample fit (ELPD) with standard errors. The two models that
+include a model-by-item interaction (teal) separate cleanly from the
+additive models (grey), which are indistinguishable from each other.}
+\label{fig:loo}
+\end{figure}
+
+The result is unambiguous. The two specifications that capture a
+model-by-item interaction fit decisively better than every additive model,
+by about 59 ELPD, more than five standard errors. The two interaction forms
+(an interaction variance component, and an IRT discrimination term) are
+indistinguishable from each other, so the interaction matters, not its exact
+parameterization. The additive embellishments do nothing: a per-system main
+effect (M4) is indistinguishable from a model with no system structure at
+all (M0), and correlating system intercepts with slopes (M\_corr) does not
+help. Under M8 the interaction is the largest structured source of variance,
+$\sigma_{\text{int}}=1.84$ (94\% HDI $[1.26, 2.40]$), exceeding the per-item,
+per-system, and per-system-slope components.
+
+This is not a curiosity; it changes published conclusions. The mean and the
+additive model attribute the interaction variance to main effects. In this
+dataset that inflated the per-item effect (its SD nearly halves when the
+interaction is admitted) and, combined with a scoring bug, produced a
+reported finding that one instruction was \emph{harmed} by being stated. The
+interaction model localizes that effect to a single extreme (system, item)
+cell of one model, and a separate framing experiment confirms it is an
+artifact, not a real effect. An analysis that cannot represent the
+interaction cannot diagnose this.
+
+\section{A reporting checklist}
+\label{sec:checklist}
+
+For an evaluation of systems crossed with graded items we recommend:
+(1) model scores with an ordinal/cumulative link, not a mean over a graded
+scale; (2) include crossed random effects for systems and items with partial
+pooling; (3) include a model-by-item interaction term, and report
+$\sigma_{\text{int}}$ alongside the main-effect SDs; (4) compare
+specifications by leave-one-out cross-validation rather than asserting a
+structure; (5) report rankings with their posterior intervals, treating
+overlap as ``tied''; (6) check prior sensitivity of the variance components,
+which are prior-influenced when the number of systems or items is small; (7)
+for judge-scored evals, model rater effects and report chance-corrected
+agreement. Items (1)--(3) are the substance; (4)--(7) are the discipline that
+keeps the conclusions honest.
+
+\section{Limitations and when not to use this}
+\label{sec:limits}
+
+The variance components are prior-sensitive when groups are few; with a
+handful of systems or items, report rankings and the qualitative
+interaction conclusion, not precise variance magnitudes. MCMC is more
+expensive than the variational estimation common in IRT-for-eval work; for
+very large item banks aimed at subselection, amortized variational methods
+remain appropriate, and the model here is better suited to analyzing a fixed
+set of systems than to scaling to millions of items. When scores are
+genuinely binary and items are not crossed with systems in a way that admits
+interaction, the full model reduces to simpler, well-understood special
+cases, and the added structure is not worth its cost. The recommendation is
+for the common middle case: a moderate number of systems, graded items, a
+crossed design, and a comparative question.
+
+\section{Conclusion}
+Evaluation tables are crossed designs of graded items, and the quantity that
+matters is often how systems differ item by item, an interaction a mean
+cannot represent. A hierarchical Bayesian graded-response model with crossed
+effects and a model-by-item interaction matches this structure, is supported
+by established psychometric theory and modern tooling, and, on a real
+evaluation, reveals structure that additive analyses miss by 59 ELPD and that
+raw means turn into a spurious finding. We recommend it as a default for
+evaluation analysis and provide the specification and checklist to apply it.
+
+\subsubsection*{Use of large language models.}
+During the preparation of this work the author used a large language model
+(Claude) to improve the language and readability of the manuscript and to
+assist with analysis and figure code; all results were computed by the
+statistical models and verified by the author.
+
+\printbibliography
+
+\end{document}

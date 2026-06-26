@@ -1,0 +1,41 @@
+# local working files (session tools, reports, scratch analysis outputs)
+.work/
+
+# run data
+data/codebases/
+experiments-v1/codebases/
+logs/*
+!logs/README.md
+*.eval
+*.log
+
+# python
+__pycache__/
+*.pyc
+.env
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.playwright-mcp/
+
+# analysis outputs
+analysis-out/
+*.nc
+
+# latex build artifacts (keep .tex/.bib/.cls/.bst/.pdf)
+*.aux
+*.bcf
+*.bbl
+*.blg
+*.out
+*.run.xml
+*.toc
+*.nav
+*.snm
+*.fls
+*.fdb_latexmk
+
+# macOS
+.DS_Store
+**/.DS_Store
