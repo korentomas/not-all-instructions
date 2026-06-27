@@ -31,25 +31,26 @@
 
 \begin{abstract}
 For an autonomous LLM agent, a safety guardrail is just another instruction
-given once at the start of a run, and as context accumulates the agent keeps
-some of its instructions while it drops others. A mean compliance rate reports how many of them survive but
-not which ones, and for a safety constraint only the second question matters.
-We therefore measure retention one instruction at a time: across 25-turn
-coding sessions spanning five instruction-following models and three
-open-source Python codebases, we plant twelve ordinary coding preferences as
-casual inline requests, score each model's later code with deterministic
-checkers on a 0--3 ordinal scale, and fit a Bayesian ordered-logistic model
-with hierarchical effects per decision type to the resulting 244 observations.
-The estimated treatment effects span $-2.4$ to $+5.4$ on the log-odds scale,
-with a group-level standard deviation of $2.1$, so that most preferences are
-already followed by default while only three of twelve benefit from being
-restated (two under a single-model robustness check). Because a planted
-preference and a guardrail are the same kind of object, the unevenness is a safety concern: a
-guardrail has to hold on every turn, so aggregate compliance can stay high
-while the one rule that matters has been dropped, and a deployed agent needs
-per-instruction monitoring to catch it. The baseline comes from a single
-model, which limits any claim of model-invariance, and compliance is measured
-only as a snapshot at turns 20--25 that does not trace how retention decays.
+given at the start of a run, and as context grows, the agent keeps some
+instructions while dropping others. Because a mean compliance rate aggregates
+across instructions, it cannot reveal which one was dropped. We measure
+retention one instruction at a time by conducting 25-turn coding sessions on
+five instruction-following models and three open-source Python codebases. In
+these sessions, we plant twelve ordinary coding preferences as casual inline
+requests, score the resulting code with deterministic checkers on a 0--3
+ordinal scale, and fit a Bayesian ordered-logistic model with hierarchical
+effects per decision type to 244 observations. Treatment effects span $-2.4$
+to $+5.4$ on the log-odds scale (group-level standard deviation $2.1$),
+showing considerable variation across preferences. Most preferences are
+already followed by default, and only three of twelve benefit from being
+restated (two under a single-model robustness check). Since these preferences
+stand in for guardrails, this unevenness is a safety concern. Because a guardrail
+must hold on every turn, aggregate compliance can remain high even after the
+one rule that matters is skipped. As a result, a deployed agent needs
+per-instruction monitoring to catch it. The baseline is a single model,
+limiting any claim of model-invariance, and compliance is measured in a single
+window (turns 20--25), so we do not see how retention decays across the
+conversation.
 
 \keywords{instruction retention \and context rot \and Bayesian inference
 \and AI safety \and LLM evaluation}
@@ -65,32 +66,30 @@ only as a snapshot at turns 20--25 that does not trace how retention decays.
 
 \begin{abstract}
 Para un agente aut\'onomo basado en un LLM, una salvaguarda no es m\'as que
-otra instrucci\'on, dada una sola vez al inicio de una ejecuci\'on, y a medida
-que el contexto se acumula el agente conserva algunas de sus instrucciones
-mientras descarta otras. Una tasa de cumplimiento promedio
-informa cu\'antas sobreviven, pero no cu\'ales, y para una
-restricci\'on de seguridad solo importa la segunda pregunta. Por eso medimos
-la retenci\'on instrucci\'on por instrucci\'on: en sesiones de programaci\'on
-de 25 turnos, sobre cinco modelos que siguen instrucciones y tres repositorios
-de Python de c\'odigo abierto, plantamos doce preferencias de programaci\'on
-comunes como pedidos informales intercalados, puntuamos
-el c\'odigo posterior de cada modelo con verificadores deterministas en una
-escala ordinal de 0 a 3, y ajustamos un modelo bayesiano de regresi\'on
-log\'istica ordinal con efectos jer\'arquicos por tipo de decisi\'on sobre las
-244 observaciones resultantes. Los efectos de tratamiento estimados van de
-$-2{,}4$ a $+5{,}4$ en la escala log-odds, con una desviaci\'on est\'andar a
-nivel de grupo de $2{,}1$, de modo que la mayor\'ia de las preferencias ya se
-cumplen por defecto y solo tres de doce se benefician de ser reiteradas (dos
-bajo una verificaci\'on de robustez con un solo modelo). Dado que una
-preferencia plantada y una salvaguarda son el mismo tipo de objeto, la
-disparidad constituye una preocupaci\'on de seguridad: una salvaguarda debe
-sostenerse en cada turno, de modo que el cumplimiento agregado puede
-mantenerse alto mientras la \'unica regla que importa ya fue descartada, y un
-agente desplegado necesita monitoreo por instrucci\'on para detectarlo. La
-l\'inea de base proviene de un solo modelo, lo que limita cualquier
+otra instrucci\'on dada al inicio de una ejecuci\'on, y a medida que el
+contexto crece, el agente conserva algunas instrucciones mientras descarta
+otras. Como una tasa de cumplimiento promedio combina todas las instrucciones,
+no puede revelar cu\'al se descart\'o. Medimos la retenci\'on instrucci\'on por
+instrucci\'on mediante sesiones de programaci\'on de 25 turnos en cinco modelos
+que siguen instrucciones y tres repositorios de Python de c\'odigo abierto. En
+esas sesiones, plantamos doce preferencias de programaci\'on comunes como
+pedidos informales intercalados, puntuamos el c\'odigo resultante con
+verificadores deterministas en una escala ordinal de 0 a 3, y ajustamos un
+modelo bayesiano de regresi\'on log\'istica ordinal con efectos jer\'arquicos
+por tipo de decisi\'on sobre 244 observaciones. Los efectos de tratamiento van
+de $-2{,}4$ a $+5{,}4$ en la escala log-odds (desviaci\'on est\'andar a nivel
+de grupo de $2{,}1$), lo que muestra una variaci\'on considerable entre
+preferencias. La mayor\'ia de las preferencias ya se cumplen por defecto, y
+solo tres de doce se benefician de reiterarse (dos bajo una verificaci\'on de
+robustez con un solo modelo). Como estas preferencias sirven de sustituto de
+salvaguardas, esta disparidad es una preocupaci\'on de seguridad. Como una
+salvaguarda debe sostenerse en cada turno, el cumplimiento agregado puede
+mantenerse alto incluso despu\'es de que se omita la \'unica regla que importa.
+Por eso, un agente desplegado necesita monitoreo por instrucci\'on para
+detectarlo. La l\'inea de base es un solo modelo, lo que limita cualquier
 afirmaci\'on de invariancia entre modelos, y el cumplimiento se mide en una
-sola ventana (los turnos 20 a 25), de modo que no vemos c\'omo decae la
-retenci\'on a lo largo de la conversaci\'on.
+sola ventana (turnos 20 a 25), por lo que no vemos c\'omo decae la retenci\'on
+a lo largo de la conversaci\'on.
 
 \keywords{retenci\'on de instrucciones \and degradaci\'on de contexto
 \and inferencia bayesiana \and seguridad de la IA \and evaluaci\'on de LLMs}
@@ -711,7 +710,7 @@ future work.
 
 \begin{credits}
 \subsubsection{\ackname} I thank my partner, Lara Rodrigues La Moglie, for
-her most gorgeous love and unwavering support; my family, for giving me the
+her boundless love and unwavering support; my caring family, for the
 opportunities that guided me all the way here; my alma mater, the Universidad
 Nacional de San Mart\'in, within whose halls I still live; and all my
 teachers, and the teachers of Argentina, who live each day to inspire others.
