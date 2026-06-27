@@ -671,8 +671,9 @@ effects directly, whereas the single-model check we ran can only infer
 model-invariance. The checkers, though reproducible, have construct-validity limits,
 so we would pair them with a blinded panel of cross-family LLM judges and
 report checker--judge and inter-judge agreement. To separate phrasing from
-content, we would re-run instructions whose effect excludes zero under
-negated paraphrases, and the negated one under positive paraphrases.
+content, we would re-run the instructions whose effect excludes zero
+(those with 94\% HDI above zero) under negated paraphrases, and the negated
+one under positive paraphrases.
 Scoring every turn would fit per-instruction
 forgetting curves and decay rates. Finally, running the posterior-derived
 ranking as a runtime policy would test whether selective reinforcement
