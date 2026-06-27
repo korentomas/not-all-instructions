@@ -102,8 +102,8 @@ falla sin monitoreo por instrucci\'on.
 %% ============================================================
 
 Language models are increasingly deployed as autonomous agents that run
-in loops, call tools, and act over hundreds of turns with no human
-reviewing each step. An agent is governed by its instructions: the
+for hundreds of turns in a loop, calling tools with no human reviewing
+each step. An agent is governed by its instructions: the
 operational limits and safety guardrails it is given, usually once and at
 the start, that must hold for the whole run. Yet adherence to instructions
 erodes as the context grows, a phenomenon we refer to as \emph{context
@@ -119,7 +119,7 @@ user to notice the lapse and restate it.
 This is a safety concern before it is a cost concern. When the model drops
 a preference, a chat user notices and restates it; a deployed agent has no
 such supervisor, so a guardrail that decays does so silently while the
-agent keeps acting through tools whose effects are real and often
+agent keeps acting through tools whose effects are often
 irreversible \parencite{mu2025}. We plant ordinary coding preferences
 rather than guardrails, but the two are the same kind of object (an
 instruction stated once and then left to compete for attention), so how
@@ -146,7 +146,7 @@ based on a sequence of observed responses. We adapt this framing: the LLM is
 the student, and its instructions are the concepts. A BKT-based reinforcement system would only be useful if instruction
 retention is in fact heterogeneous. We test this using a Bayesian ordered logistic model with
 hierarchical effects per decision type, fitted to compliance scores
-collected from realistic multi-turn coding conversations across three
+collected from multi-turn coding conversations across three
 open-source codebases.
 
 We report three findings. First, retention heterogeneity across
@@ -157,9 +157,9 @@ $\sigma_\beta = 2.1$). Second, one instruction type
 94\% HDI barely excludes zero), which we read as a likely measurement
 artifact rather than a robust harm. Third, within the resolution of this design,
 the model and codebase size explain little variance in retention;
-because baseline data comes from a single model, we read this as
-model-invariance within our design rather than an established absence of
-model effects. A Bayesian model can then identify which instructions to
+because baseline data comes from a single model, we read this
+cautiously: the design shows model-invariance, but cannot establish that
+model effects are absent. A Bayesian model can then identify which instructions to
 reinforce and which to leave alone.
 
 
@@ -221,10 +221,9 @@ concept.
 
 We simulate an AI coding assistant working on a real open-source
 codebase over 25 turns. At each turn, the assistant receives a user
-message and may call tools (read files, write code, search the
-codebase). Real source files are injected into the conversation at
-turns 0--19, building up context pressure as the conversation
-progresses.
+message and may call tools (read and write code, search the
+codebase). Source files are injected into the conversation at
+turns 0--19 to build context pressure.
 
 In the \textbf{treatment} condition, 12 coding preferences are embedded
 as casual inline requests within the user's messages at specific turns.
@@ -365,7 +364,7 @@ All repositories were cloned at fixed commits: Bambi
 \texttt{374cd28} and \texttt{arviz-stats} at \texttt{8d6316a},
 2026-03-26/29), and PyMC (\texttt{bca2b1e}, 2026-03-27, branch v6).
 Source files were injected into the conversation at turns 0--19 via
-the tool execution system, which serves real file contents from the
+the tool execution system, which serves file contents from the
 cloned repositories.
 
 \subsection{Models}
@@ -390,7 +389,7 @@ Gemma 4         & 26B  &            & \checkmark \\
 \end{tabular}
 \end{table}
 
-Qwen served as the primary model with both baseline and treatment
+Qwen was the primary model, with both baseline and treatment
 conditions across all three codebases (18 conversations). The remaining
 four models were tested in the treatment condition only, to verify that
 the retention patterns generalize across architectures. Gemma was tested
@@ -475,8 +474,8 @@ while stating ``do not add new imports'' lowers the treatment mean to
 instruction following. But the checker for this type
 (\texttt{no\_new\_imports}) counts \emph{any} import
 statement as new, including re-shown imports already present in the file
-(Section~\ref{sec:limitations}), so we treat this as a candidate
-measurement artifact rather than a robust harm. Isolating the negation
+(Section~\ref{sec:limitations}), so we suspect a measurement artifact
+here and do not read it as a robust harm. Isolating the negation
 from the content (comparing ``avoid new imports'' with ``use only
 existing imports'') would settle it.
 
@@ -510,9 +509,9 @@ We use the posterior to derive a reinforcement ranking. For each
 decision type $d$, we compute $P(\text{score} \geq 2 \mid
 \text{told})$ and $P(\text{score} \geq 2 \mid \text{not told})$ across
 all posterior samples, and define the reinforcement gain as their
-difference (Figure~\ref{fig:policy}). This is not a closed-loop policy
-evaluation; it is a posterior-derived priority ranking that identifies
-which instructions would benefit from reinforcement.
+difference (Figure~\ref{fig:policy}). This posterior-derived ranking
+identifies which instructions would benefit from reinforcement; we do
+not run it as a closed-loop policy.
 
 \begin{figure}[t]
 \centering
@@ -526,7 +525,7 @@ Table~\ref{tab:policy} summarizes the ranking. Of 12 instruction types,
 only 3 have a reinforcement gain with 94\% HDI entirely above zero. A
 uniform policy that reinforces all 12 would spend tokens on 8
 instructions that need no help and 1 with a marginal negative
-effect. This ranking is a cost criterion, not a safety one: a low gain may
+effect. A low gain may
 mean the model already complies, or that the checker saw nothing (a
 default-2 ceiling), neither of which licenses dropping a safety-relevant
 rule. It saves tokens on ordinary preferences; it does not choose which
@@ -580,8 +579,8 @@ excludes zero, though its direction is credible ($P(\beta < 0) = 0.98$); the
 magnitude, and whether it reflects negation framing or the checker artifact
 (Section~\ref{sec:limitations}), remain open. The instruction
 ``do not add new imports'' is the only one phrased as a negation. All
-other instructions tell the model what to do, not what to avoid. This
-raises the question of whether the negative treatment effect reflects
+other instructions tell the model what to do, not what to avoid. It is
+unclear whether the negative treatment effect reflects
 something about the content of the instruction (import management) or
 its framing (negation). Which case holds determines the fix: if
 negation is the problem, reformulating as ``use only existing imports''
@@ -638,7 +637,7 @@ action taken or avoided. We read preferences as a proxy for guardrails
 because both are user instructions competing for the same attention, but
 that link is a hypothesis grounded in the shared mechanism, not a
 demonstrated guardrail bypass. If anything, the proxy may overstate
-guardrail fragility: real guardrails often sit at position zero in the
+guardrail fragility: actual guardrails often sit at position zero in the
 system prompt, the most stable position \parencite{liu2024}, and are
 reinforced in training, so it speaks most directly to newly stated,
 in-context constraints. Showing that a stated safety constraint
@@ -691,8 +690,8 @@ negated paraphrases, and the negated one under positive paraphrases.
 Scoring every turn, rather than only 20--25, would fit per-instruction
 forgetting curves and decay rates. Finally, running the posterior-derived
 ranking as a runtime policy would test whether selective reinforcement
-beats uniform under a fixed token budget, and real coding-session traces
-would test whether the structure holds outside the harness.
+beats uniform under a fixed token budget, and traces from deployed
+coding sessions would test whether the structure holds outside the harness.
 
 %% ============================================================
 \section{Conclusion}
@@ -707,7 +706,8 @@ levels of context pressure tested, and the heterogeneity replicates on a
 single model with matched baseline and treatment conditions ($r = 0.80$);
 with baseline data from one model, though, we cannot fully separate
 per-model from per-instruction effects, and read the model-level result as
-no detectable effect at this resolution rather than established invariance.
+no detectable effect at this resolution; we do not claim established
+invariance.
 
 Of 12 instruction types, only 3 show a reinforcement gain whose interval
 excludes zero in the full model (two when restricted to the single model
@@ -721,7 +721,7 @@ future work.
 \subsubsection{\ackname} I thank my partner, Lara Rodrigues La Moglie, for
 her most gorgeous love and unwavering support; my family, for giving me the
 opportunities that guided me all the way here; my alma mater, the Universidad
-Nacional de San Mart\'in, between whose halls I still live; and all my
+Nacional de San Mart\'in, within whose halls I still live; and all my
 teachers, and the teachers of Argentina, who live each day to inspire others.
 
 \subsubsection{Use of large language models}
