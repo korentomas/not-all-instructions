@@ -99,13 +99,14 @@ detectarlo.
 
 Language models are increasingly deployed as autonomous agents that run
 for hundreds of turns in a loop, calling tools with no human reviewing
-each step. An agent is governed by its instructions: the
+each step. An agent is governed by its instructions, which are the
 operational limits and safety guardrails it is given, usually once and at
 the start, that must hold for the whole run. Yet adherence to instructions
 erodes as the context grows, a phenomenon we refer to as \emph{context
 rot}. \textcite{laban2025} measured average compliance drops of 39\%
-across 15 models in multi-turn settings. The cause is architectural:
-attention is not uniformly distributed across the context window, and
+across 15 models in multi-turn settings. The cause lies in the
+architecture, where attention is not uniformly distributed across the
+context window, and
 information in middle positions receives less weight than at the
 boundaries \parencite{liu2024, chowdhury2026}. An instruction stated once
 and then buried under accumulating tool output competes for attention
@@ -113,9 +114,9 @@ against everything that follows it, and in a deployed loop there is no
 user to notice and restate it.
 
 This is a safety concern before it is a cost concern. When the model drops
-a preference, a chat user notices and restates it; a deployed agent has no
-such supervisor, so a guardrail that decays does so silently while the
-agent keeps acting through tools whose effects are often
+a preference, a chat user notices and restates it, whereas a deployed agent
+has no such supervisor, so a guardrail that decays does so silently while the
+agent keeps acting through tools whose consequences are often
 irreversible \parencite{mu2025}. We plant ordinary coding preferences,
 and a preference and a guardrail are the same kind of object (an
 instruction stated once and then left to compete for attention), so how
@@ -138,8 +139,8 @@ these two cases apart without per-instruction estimates.
 Bayesian Knowledge Tracing \parencite{corbett1994} is a framework
 for per-instruction estimation. Originally developed in education,
 BKT estimates the probability that a student has mastered a concept
-based on a sequence of observed responses. We adapt this framing: the LLM is
-the student, and its instructions are the concepts. A BKT-based reinforcement system would only be useful if instruction
+based on a sequence of observed responses. We adapt this framing, where the
+LLM is the student and its instructions are the concepts. A BKT-based reinforcement system would only be useful if instruction
 retention is in fact heterogeneous. We test this using a Bayesian ordered logistic model with
 hierarchical effects per decision type, fitted to compliance scores
 collected from multi-turn coding conversations across three
@@ -153,8 +154,8 @@ $\sigma_\beta = 2.1$). Second, one instruction type
 94\% HDI barely excludes zero), which most likely reflects a measurement
 artifact. Third, within the resolution of this design,
 model and codebase size explain little variance in retention. Because
-baseline data comes from a single model, we read this cautiously: the
-design shows model-invariance but cannot establish that model effects
+baseline data comes from a single model, we read this cautiously, because
+the design shows model-invariance but cannot establish that model effects
 are absent. A Bayesian model can then identify which instructions to
 reinforce and which to leave alone.
 
@@ -177,20 +178,20 @@ to different degrees.
 
 \paragraph{Positional attention and prompt saturation.}
 Compliance degradation arises from the attention architecture. \textcite{liu2024} identified a U-shaped attention
-curve: information at the beginning and end of the context receives more
-weight, while middle positions are underweighted. This positional bias
+curve, where information at the beginning and end of the context receives
+more weight while middle positions are underweighted. This positional bias
 explains why system prompt instructions, which occupy position zero,
 remain more stable than user-stated preferences buried mid-conversation.
-\textcite{mu2025} showed a related saturation effect: as the number of
-guardrails in a system prompt increases, compliance with any individual
-rule drops sharply. A model therefore follows a rule less reliably the deeper it sits and
+\textcite{mu2025} showed a related saturation effect, whereby compliance
+with any individual rule drops sharply as the number of guardrails in a
+system prompt increases. A model therefore follows a rule less reliably the deeper it sits and
 the more instructions crowd around it.
 
 \paragraph{Uniform mitigation strategies.}
 Existing approaches to maintaining compliance treat all instructions
 equally. \textcite{dongre2025} modeled instruction drift as a bounded
 stochastic process and proposed periodic reminders to reduce divergence.
-\textcite{leviathan2025} studied the effect of prompt repetition on
+\textcite{leviathan2025} studied how prompt repetition affects
 instruction stability. Both approaches reinforce all instructions at
 each intervention, regardless of whether an individual instruction has
 been retained or forgotten. This uniform strategy becomes expensive at
@@ -221,7 +222,7 @@ turns 0--19 to build context pressure.
 In the \textbf{treatment} condition, 12 coding preferences are embedded
 as casual inline requests within the user's messages at specific turns.
 Six are planted early (turns 1--7) and six late (turns 14--19). Each
-preference targets a different coding practice: code style (NumPy
+preference targets a different coding practice, spanning code style (NumPy
 broadcasting, list comprehensions), architecture (subclassing vs.\ standalone
 functions), testing (parametrize, approximate assertions),
 naming (underscore prefix, no abbreviations), dependencies (no new
@@ -232,7 +233,7 @@ writing array operations for this project, always use NumPy
 broadcasting instead of for loops'').
 
 In the \textbf{baseline} condition, we inject the same files and issue the same task, but plant no
-preferences. This allows us to measure what the model does
+preferences. The baseline lets us measure what the model does
 by default for each decision type.
 
 At turns 20--25, the user requests code generation tasks designed to
@@ -245,7 +246,7 @@ scored by deterministic checkers.
 
 Each of the 12 decision types is evaluated by a deterministic checker
 that parses the model's code output using regular expressions and
-pattern matching. This makes results reproducible across runs. Each checker produces
+pattern matching. Parsing the same patterns each run keeps results reproducible. Each checker produces
 an ordinal score on a 0--3 scale:
 
 \begin{itemize}
@@ -270,7 +271,7 @@ in generated code.
 We model the ordinal compliance scores using an ordered logistic
 regression (cumulative link model) with hierarchical effects per
 decision type. The ordered logistic is appropriate because the 0--3
-scores have unequal intervals: the gap between 0 (ignored) and 1
+scores have unequal intervals. The gap between 0 (ignored) and 1
 (minimal compliance) is qualitatively different from the gap between 2
 (mostly followed) and 3 (fully followed). A linear model would
 incorrectly assume equal spacing.
@@ -350,7 +351,7 @@ thus context pressure levels:
     framework. Context reaches approximately 203K tokens by turn~20.
 \end{itemize}
 
-All repositories were cloned at fixed commits: Bambi
+All repositories were cloned at fixed commits, namely Bambi
 (\texttt{5110615}, 2026-03-17), ArviZ (\texttt{arviz-base} at
 \texttt{374cd28} and \texttt{arviz-stats} at \texttt{8d6316a},
 2026-03-26/29), and PyMC (\texttt{bca2b1e}, 2026-03-27, branch v6).
@@ -388,7 +389,7 @@ on Bambi only due to budget constraints.
 
 \subsection{Dataset}
 
-We ran 28 conversations in total: 9 baseline and 19 treatment. Models
+We ran 28 conversations in total, comprising 9 baseline and 19 treatment. Models
 were accessed through OpenRouter (Qwen, Gemini, Gemma, Nemotron) and
 the OpenAI API (GPT-5.4-nano), queried at each provider's default sampling
 settings (temperature not overridden), one generation per turn, capped at
@@ -409,7 +410,7 @@ conversation logs, checker code, and analysis notebooks are available at
 \label{sec:results}
 %% ============================================================
 
-The model converged cleanly: zero divergences, $\hat{R} \leq 1.01$
+The model converged cleanly, with zero divergences, $\hat{R} \leq 1.01$
 for all parameters, and a minimum effective sample size of 1311.
 Posterior predictive checks confirm that the model reproduces the
 observed score distribution (Figure~\ref{fig:ppc}).
@@ -439,18 +440,18 @@ Dark bars: 94\% HDI excludes zero. Hatched: negative effect.
 Light bars: inconclusive.}\label{fig:forest}
 \end{figure}
 
-The posterior separates the 12 decision types into three groups:
+The posterior separates the 12 decision types into three groups.
 
 \paragraph{Instructions that benefit from reinforcement.}
 Three decision types have treatment effects with 94\% HDI entirely
 above zero. \texttt{testing\_parametrize} has the largest effect
-($\beta = 5.44$, HDI: $[2.94, 8.10]$): models almost never use
+($\beta = 5.44$, HDI: $[2.94, 8.10]$), where models almost never use
 \texttt{pytest.mark.\allowbreak{}parametrize} unprompted (baseline
-mean: 0.00) but retain the preference when told (treatment mean:
+mean 0.00) but retain the preference when told (treatment mean
 2.79). \texttt{dependencies\_\allowbreak{}module\_constants}
 ($\beta = 2.76$, HDI: $[0.60, 5.00]$) and
 \texttt{architecture\_\allowbreak{}standalone} ($\beta = 2.38$,
-HDI: $[0.29, 4.63]$) follow the same pattern: near-zero baseline,
+HDI: $[0.29, 4.63]$) follow the same pattern of near-zero baseline and
 retention when stated.
 
 \paragraph{A marginal negative effect.}
@@ -474,7 +475,7 @@ existing imports'') would settle it.
 The remaining eight decision types show treatment effects with HDIs
 crossing zero. Several of these have high baseline compliance
 (\texttt{broadcasting}: 3.00, \texttt{numpy\_style}: 3.00,
-\texttt{snake\_no\_abbrev}: 2.67): the models already follow these
+\texttt{snake\_no\_abbrev}: 2.67). The models already follow these
 conventions, so restating them does not change the score.
 
 \subsection{Model and codebase effects}
@@ -488,7 +489,7 @@ tokens), and no per-model or per-codebase effect is detectable at this
 resolution. With a single-model baseline and shrinkage priors, though, this
 supports model-invariance only weakly, and we cannot fully separate
 per-model retention (Section~\ref{sec:limitations}). One reading we can set aside,
-though: retention does not climb from the 26B to the 120B model, so the
+though, is that retention does not climb from the 26B to the 120B model, so the
 heterogeneity does not appear to be model capability under another name.
 If these differences were a capability effect, the largest model would
 comply most.
@@ -516,7 +517,7 @@ instructions that need no help and 1 with a marginal negative
 effect. A low gain may
 mean the model already complies, or that the checker saw nothing (a
 default-2 ceiling), neither of which licenses dropping a safety-relevant
-rule. It saves tokens on ordinary preferences; it says nothing about which
+rule. It saves tokens on ordinary preferences but says nothing about which
 guardrails to drop.
 
 \begin{table}[t]
@@ -550,8 +551,8 @@ Decision type & Gain & 94\% HDI & Action \\
 
 \subsection{What determines retention}
 
-Retention tracks default behavior: instructions that ask for something
-the model would not do by default are retained when stated, while those
+Retention tracks default behavior. Instructions that ask for something
+the model would not do by default are retained when stated, whereas those
 that match existing behavior show no treatment effect. The three decisions
 with clear positive effects
 (\texttt{parametrize}, \texttt{module\_constants},
@@ -559,18 +560,18 @@ with clear positive effects
 decisions with no treatment effect (\texttt{broadcasting},
 \texttt{numpy\_style}, \texttt{snake\_no\_abbrev}) have baseline
 compliance near 3.0. The models' defaults already match these
-conventions, so restating them has no effect.
+conventions, so restating them changes nothing.
 
 The negative effect on \texttt{dependencies\_\allowbreak{}no\_new} is the
 only one in the study. We call it marginal, since its 94\% HDI barely
-excludes zero, though its direction is credible ($P(\beta < 0) = 0.98$); the
-magnitude, and whether it reflects negation framing or the checker artifact
-(Section~\ref{sec:limitations}), remain open. The instruction
+excludes zero, though its direction is credible ($P(\beta < 0) = 0.98$). What
+stays open is the magnitude, and whether it reflects negation framing or the
+checker artifact (Section~\ref{sec:limitations}). The instruction
 ``do not add new imports'' is the only one phrased as a negation. All
 other instructions tell the model what to do, not what to avoid. It is
 unclear whether the negative treatment effect reflects
 something about the content of the instruction (import management) or
-its framing (negation). Which case holds determines the fix: if
+its framing (negation). Which case holds determines the fix. If
 negation is the problem, reformulating as ``use only existing imports''
 might produce a positive effect. If import management is inherently
 hard to retain, no framing will help. Distinguishing these hypotheses
@@ -584,7 +585,7 @@ Baseline data comes from Qwen only, so we refit the model on Qwen
 observations alone (132 of 244, both conditions). The per-decision treatment effects correlate at
 $r = 0.80$ with the full-model estimates, and the group-level
 heterogeneity parameter remains stable ($\sigma_\beta = 2.35$ vs.\
-$2.11$ in the full model). Three of the strongest effects replicate:
+$2.11$ in the full model). Three of the strongest effects replicate, with
 \texttt{parametrize} ($\beta = 6.13$), \texttt{module\_constants}
 ($\beta = 2.25$), and \texttt{dependencies\_no\_new} ($\beta =
 -1.07$, still negative though with wider intervals).
@@ -620,13 +621,13 @@ tested.
 The instructions we plant are ordinary coding preferences, not safety
 guardrails, and the test turns measure code style. None involves a
 harmful action taken or avoided. We read preferences as a proxy for guardrails
-because both are user instructions competing for the same attention, but
+insofar as both are user instructions competing for the same attention, but
 that link remains a hypothesis grounded in the shared mechanism. If anything, the proxy may overstate
-guardrail fragility: actual guardrails often sit at position zero in the
+guardrail fragility, because actual guardrails often sit at position zero in the
 system prompt, the most stable position \parencite{liu2024}, and are
 reinforced in training, so our finding applies most directly to newly
-stated, in-context constraints. One direct test remains open: whether a
-stated safety constraint decays the same way, and whether the decay then
+stated, in-context constraints. One direct test remains open, namely whether
+a stated safety constraint decays the same way, and whether the decay then
 lets a harmful action through. All of our evidence
 also comes from Python coding sessions. Whether the same per-instruction
 structure holds for tool-use agents under safety constraints in other
@@ -639,7 +640,7 @@ intervals for low-data decisions reflect this uncertainty.
 However, the reinforcement ranking for the ``uncertain'' category
 (Table~\ref{tab:policy}) should be treated as preliminary.
 
-Compliance was measured at turns 20--25 only. This gives a retention
+Compliance was measured at turns 20--25 only. That window gives a retention
 snapshot, not a decay curve. We cannot estimate per-instruction decay
 rates or say at which turn compliance starts to drop. Fitting forgetting
 curves would mean scoring every turn, which in turn means designing
@@ -649,7 +650,7 @@ making the conversation artificial.
 The deterministic checkers have construct-validity limitations. When a
 checker cannot find a relevant code pattern, it defaults to a score of
 2 (``no clear signal''). Four decision types have default-2 rates
-above 50\%: \texttt{architecture\_extend} (79\%),
+above 50\%, specifically \texttt{architecture\_extend} (79\%),
 \texttt{docs\_regex\_comments} (75\%), \texttt{code\_style\_listcomp}
 (72\%), and \texttt{testing\_assert\_almost} (50\%). The three
 decisions with the strongest treatment effects (\texttt{parametrize},
