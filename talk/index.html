@@ -59,6 +59,7 @@
   .tl-test { flex: 6; background: var(--ink); }
   .tl-marks { position: relative; width: 84vw; height: 5.2vh; }
   .tl-marks span { position: absolute; top: 0; font-size: 2.2vh; color: var(--accent); font-weight: 600; }
+  .eq { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 4.2vh; text-align: center; padding: 1.5vh 0; }
   .footer-counter {
     position: fixed; right: 2.2vw; bottom: 2.8vh;
     font-size: 2vh; color: var(--faint); font-variant-numeric: tabular-nums;
@@ -129,7 +130,8 @@
 <section class="slide">
   <div class="kicker">Método</div>
   <h1>Una regresión logística ordenada estima un efecto por instrucción</h1>
-  <p>Cada tipo de decisión tiene su propio intercepto, que captura qué hace el modelo por defecto, y su propio efecto de tratamiento, que mide cuánto ayuda pedirlo, con partial pooling que protege contra los pocos datos por celda.</p>
+  <div class="eq">η = α<sub>d</sub> + β<sub>d</sub> · told</div>
+  <p>Cada tipo de decisión d tiene su intercepto α<sub>d</sub>, que captura qué hace el modelo por defecto, y su efecto β<sub>d</sub>, que mide cuánto ayuda pedirlo, con partial pooling que protege contra los pocos datos por celda.</p>
   <p class="note">244 observaciones, 28 conversaciones, 5 modelos, 3 codebases. σ<sub>β</sub> = 2,1 mide cuánto varían las instrucciones entre sí.</p>
 </section>
 
