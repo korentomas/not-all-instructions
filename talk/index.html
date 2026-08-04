@@ -59,7 +59,11 @@
   .tl-test { flex: 6; background: var(--ink); }
   .tl-marks { position: relative; width: 84vw; height: 5.2vh; }
   .tl-marks span { position: absolute; top: 0; font-size: 2.2vh; color: var(--accent); font-weight: 600; }
-  .eq { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 4.2vh; text-align: center; padding: 1.5vh 0; }
+  .eq { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 3.6vh; }
+  .modelbox { background: #f0eee8; border-radius: 1.6vh; padding: 3vh 2.6vw; display: flex; flex-direction: column; gap: 2.4vh; width: 84vw; }
+  .eqrow { display: grid; grid-template-columns: 36vw 1fr; align-items: baseline; gap: 2.5vw; }
+  .eqrow .gloss { font-size: 2.5vh; color: var(--muted); line-height: 1.4; }
+  .tl-marks span::before { content: ""; display: inline-block; margin-right: 0.6vw; border-left: 0.8vh solid transparent; border-right: 0.8vh solid transparent; border-bottom: 1.4vh solid var(--accent); }
   .footer-counter {
     position: fixed; right: 2.2vw; bottom: 2.8vh;
     font-size: 2vh; color: var(--faint); font-variant-numeric: tabular-nums;
@@ -75,7 +79,7 @@
 </head>
 <body>
 
-<!-- 1 · título -->
+<!-- 1 título -->
 <section class="slide title-slide">
   <div class="venue">55 JAIIO, ASAID 2026</div>
   <h1>Not All Instructions Are<br>Forgotten <span class="hl">Equal</span></h1>
@@ -84,7 +88,7 @@
   <div class="repo">github.com/korentomas/not-all-instructions</div>
 </section>
 
-<!-- 2 · apertura 1 -->
+<!-- 2 apertura 1 -->
 <section class="slide">
   <div class="kicker">El problema</div>
   <h1>Un agente recibe sus instrucciones una sola vez, y tienen que valer durante toda la corrida</h1>
@@ -92,7 +96,7 @@
   <p class="note">Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
 </section>
 
-<!-- 3 · apertura 2 -->
+<!-- 3 apertura 2 -->
 <section class="slide">
   <div class="kicker">El problema</div>
   <h1>La adherencia se degrada con el contexto, y el promedio no dice cuál instrucción cayó</h1>
@@ -100,7 +104,7 @@
   <p>Los estudios existentes reportan adherencia promedio sobre conjuntos de instrucciones, un número que no identifica cuál regla se perdió.</p>
 </section>
 
-<!-- 4 · forecast -->
+<!-- 4 forecast -->
 <section class="slide">
   <div class="kicker">Este trabajo</div>
   <h1>Medimos la retención instrucción por instrucción, y resulta muy despareja</h1>
@@ -111,38 +115,42 @@
   </div>
 </section>
 
-<!-- 5 · método protocolo -->
+<!-- 5 método protocolo -->
 <section class="slide">
   <div class="kicker">Método</div>
   <h1>Sesiones de código de 25 turnos con 12 preferencias plantadas al pasar</h1>
   <div class="timeline">
-    <div class="tl-inject">turnos 0 a 19 (inyección de archivos del codebase, 98K a 203K tokens)</div>
-    <div class="tl-test">20 a 25 (prueba)</div>
+    <div class="tl-inject">turnos 0 a 19, se inyectan archivos del codebase (98K a 203K tokens)</div>
+    <div class="tl-test">20 a 25, prueba</div>
   </div>
   <div class="tl-marks">
     <span style="left: 6%">6 tempranas (turnos 1 a 7)</span>
-    <span style="left: 52%">6 tardías (turnos 14 a 19)</span>
+    <span style="left: 52%">6 tardías (14 a 19)</span>
   </div>
   <p class="note">Cada preferencia se pide como un comentario casual del usuario, y el código generado en los turnos de prueba se puntúa con checkers determinísticos en una escala ordinal de 0 a 3. El baseline corre las mismas sesiones sin plantar nada.</p>
 </section>
 
-<!-- 6 · método modelo -->
+<!-- 6 método modelo -->
 <section class="slide">
   <div class="kicker">Método</div>
   <h1>Una regresión logística ordenada estima un efecto por instrucción</h1>
-  <div class="eq">η = α<sub>d</sub> + β<sub>d</sub> · told</div>
-  <p>Cada tipo de decisión d tiene su intercepto α<sub>d</sub>, que captura qué hace el modelo por defecto, y su efecto β<sub>d</sub>, que mide cuánto ayuda pedirlo, con partial pooling que protege contra los pocos datos por celda.</p>
-  <p class="note">244 observaciones, 28 conversaciones, 5 modelos, 3 codebases. σ<sub>β</sub> = 2,1 mide cuánto varían las instrucciones entre sí.</p>
+  <div class="modelbox">
+    <div class="eqrow"><span class="eq">score<sub>i</sub> ~ OrderedLogistic(η<sub>i</sub>, c)</span><span class="gloss">el puntaje 0 a 3 es ordinal y cae según dónde queda η respecto de tres cortes ordenados c<sub>1</sub> &lt; c<sub>2</sub> &lt; c<sub>3</sub></span></div>
+    <div class="eqrow"><span class="eq">η<sub>i</sub> = α<sub>d[i]</sub> + β<sub>d[i]</sub> · told<sub>i</sub></span><span class="gloss">α<sub>d</sub> es lo que el modelo hace por defecto para la decisión d, whereas β<sub>d</sub> es cuánto cambia al decirla</span></div>
+    <div class="eqrow"><span class="eq">α<sub>d</sub> ~ N(μ<sub>α</sub>, σ<sub>α</sub>), &nbsp;β<sub>d</sub> ~ N(μ<sub>β</sub>, σ<sub>β</sub>)</span><span class="gloss">las 12 instrucciones comparten información mediante partial pooling, que protege contra los pocos datos por celda</span></div>
+    <div class="eqrow"><span class="eq">μ<sub>β</sub> ~ N(0, 1), &nbsp;σ<sub>β</sub> ~ Exp(1)</span><span class="gloss">priors débiles centrados en cero, sin dirección asumida para el efecto</span></div>
+  </div>
+  <p class="note">244 observaciones, 28 conversaciones, 5 modelos, 3 codebases. σ<sub>β</sub> mide cuánto varían las instrucciones entre sí, y su posterior da 2,1.</p>
 </section>
 
-<!-- 7 · R1 datos crudos -->
+<!-- 7 R1 datos crudos -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Los datos crudos ya muestran tres patrones distintos</h1>
   <div class="fig"><img src="figures/raw_landscape.png" alt="Puntaje medio por decisión, baseline vs treatment"></div>
 </section>
 
-<!-- 8 · R2 forest b1 -->
+<!-- 8 R2 forest b1 -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Tres instrucciones se benefician de ser repetidas</h1>
@@ -150,14 +158,14 @@
   <p class="cap">testing parametrize pasa de no usarse nunca (baseline 0,00) a retenerse cuando se pide (β = 5,4)</p>
 </section>
 
-<!-- 9 · R2 forest b2 -->
+<!-- 9 R2 forest b2 -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Ocho ya se cumplen por defecto, así que repetirlas no cambia nada</h1>
   <div class="fig"><img src="figures/forest_b2.png" alt="Forest plot, se agrega el grupo no concluyente"></div>
 </section>
 
-<!-- 10 · R2 forest full -->
+<!-- 10 R2 forest full -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Una empeora al repetirla, aunque sospechamos un artefacto de medición</h1>
@@ -165,7 +173,7 @@
   <p class="cap">el checker de dependencies no new cuenta como nuevo cualquier import, incluidos los ya presentes en el archivo</p>
 </section>
 
-<!-- 11 · R3 política -->
+<!-- 11 R3 política -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Repetir todas las instrucciones desperdicia tokens en 9 de 12</h1>
@@ -173,7 +181,7 @@
   <p class="cap">una ganancia baja no licencia descartar una regla de seguridad, solo ahorra repetición en preferencias ordinarias</p>
 </section>
 
-<!-- 12 · R4 invarianza -->
+<!-- 12 R4 invarianza -->
 <section class="slide">
   <div class="kicker">Resultados</div>
   <h1>Ni el modelo ni el codebase explican la variación</h1>
@@ -182,7 +190,7 @@
   <p class="note">Con baseline de un solo modelo esto sostiene invarianza débil, no ausencia de efectos por modelo.</p>
 </section>
 
-<!-- 13 · discusión -->
+<!-- 13 discusión -->
 <section class="slide">
   <div class="kicker">Implicación</div>
   <h1>Una salvaguarda es una instrucción más, y el promedio puede esconder su caída</h1>
@@ -190,7 +198,7 @@
   <p>Como la seguridad es conjuntiva, el cumplimiento agregado puede verse alto mientras la única regla que importa ya cayó, y por eso un agente desplegado necesita monitoreo por instrucción.</p>
 </section>
 
-<!-- 14 · conclusión -->
+<!-- 14 conclusión -->
 <section class="slide">
   <div class="kicker">Conclusión</div>
   <h1>La retención es medible, despareja y accionable</h1>
@@ -200,14 +208,15 @@
     <li>El marco per-instrucción habilita monitoreo selectivo, con BKT como dirección natural.</li>
   </ul>
   <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions</p>
+  <p class="note">Gracias.</p>
 </section>
 
-<!-- 15 · divider backup -->
+<!-- 15 divider backup -->
 <section class="slide divider backup">
   <h1>Backup</h1>
 </section>
 
-<!-- 16 · backup ppc -->
+<!-- 16 backup ppc -->
 <section class="slide backup">
   <div class="kicker">Backup, diagnósticos</div>
   <h1>El modelo reproduce la distribución observada</h1>
@@ -215,14 +224,14 @@
   <p class="cap">cero divergencias, R̂ ≤ 1,01, ESS mínimo 1311, medias 1,70 (baseline) y 2,16 (treatment)</p>
 </section>
 
-<!-- 17 · backup ppc por decisión -->
+<!-- 17 backup ppc por decisión -->
 <section class="slide backup">
   <div class="kicker">Backup, diagnósticos</div>
   <h1>Las 12 medias observadas caen dentro del intervalo predictivo del 90%</h1>
   <div class="fig"><img src="figures/ppc_decision.png" alt="PPC por decisión"></div>
 </section>
 
-<!-- 18 · backup modelo -->
+<!-- 18 backup modelo -->
 <section class="slide backup">
   <div class="kicker">Backup, especificación</div>
   <h1>Especificación completa del modelo</h1>
@@ -230,7 +239,7 @@
   <p class="note">PyMC con sampler nutpie (NUTS), 4 cadenas de 1000 draws tras 1000 de tuning. Prior y posterior predictive checks en el repo.</p>
 </section>
 
-<!-- 19 · backup artefacto -->
+<!-- 19 backup artefacto -->
 <section class="slide backup">
   <div class="kicker">Backup, el efecto negativo</div>
   <h1>Por qué leemos dependencies no new como artefacto</h1>
@@ -238,7 +247,7 @@
   <p>La dirección negativa es creíble (P(β &lt; 0) = 0,98) pero la magnitud queda abierta, y separar la negación del contenido (comparar "avoid new imports" con "use only existing imports") lo resolvería.</p>
 </section>
 
-<!-- 20 · backup related work 2026 -->
+<!-- 20 backup related work 2026 -->
 <section class="slide backup">
   <div class="kicker">Backup, trabajo posterior</div>
   <h1>El trabajo de 2026 confirma la dirección con menor resolución</h1>
@@ -249,7 +258,7 @@
   </ul>
 </section>
 
-<!-- 21 · backup robustez -->
+<!-- 21 backup robustez -->
 <section class="slide backup">
   <div class="kicker">Backup, robustez</div>
   <h1>Los hallazgos sobreviven los chequeos de robustez</h1>
