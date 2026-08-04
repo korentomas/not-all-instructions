@@ -76,6 +76,13 @@
   .backup ul li::before { background: var(--faint); }
   .divider { align-items: center; text-align: center; }
   .divider h1 { color: var(--faint); }
+
+  @media print {
+    @page { size: 13.333in 7.5in; margin: 0; }
+    html, body { height: auto; overflow: visible; }
+    .slide { position: relative; display: flex; inset: auto; width: 13.333in; height: 7.5in; page-break-after: always; break-after: page; }
+    .footer-counter { display: none; }
+  }
 </style>
 </head>
 <body>
