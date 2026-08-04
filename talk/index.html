@@ -92,7 +92,7 @@
 <section class="slide">
   <div class="kicker">El problema</div>
   <h1>Un agente recibe sus instrucciones una sola vez, y tienen que valer durante toda la corrida</h1>
-  <p>Los agentes LLM corren cientos de turnos llamando herramientas sin que nadie revise cada paso, whereas sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
+  <p>Los agentes LLM corren cientos de turnos llamando herramientas sin que nadie revise cada paso, mientras que sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
   <p class="note">Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
 </section>
 
@@ -136,7 +136,7 @@
   <h1>Una regresión logística ordenada estima un efecto por instrucción</h1>
   <div class="modelbox">
     <div class="eqrow"><span class="eq">score<sub>i</sub> ~ OrderedLogistic(η<sub>i</sub>, c)</span><span class="gloss">el puntaje 0 a 3 es ordinal y cae según dónde queda η respecto de tres cortes ordenados c<sub>1</sub> &lt; c<sub>2</sub> &lt; c<sub>3</sub></span></div>
-    <div class="eqrow"><span class="eq">η<sub>i</sub> = α<sub>d[i]</sub> + β<sub>d[i]</sub> · told<sub>i</sub></span><span class="gloss">α<sub>d</sub> es lo que el modelo hace por defecto para la decisión d, whereas β<sub>d</sub> es cuánto cambia al decirla</span></div>
+    <div class="eqrow"><span class="eq">η<sub>i</sub> = α<sub>d[i]</sub> + β<sub>d[i]</sub> · told<sub>i</sub></span><span class="gloss">α<sub>d</sub> es lo que el modelo hace por defecto para la decisión d, mientras que β<sub>d</sub> es cuánto cambia al decirla</span></div>
     <div class="eqrow"><span class="eq">α<sub>d</sub> ~ N(μ<sub>α</sub>, σ<sub>α</sub>), &nbsp;β<sub>d</sub> ~ N(μ<sub>β</sub>, σ<sub>β</sub>)</span><span class="gloss">las 12 instrucciones comparten información mediante partial pooling, que protege contra los pocos datos por celda</span></div>
     <div class="eqrow"><span class="eq">μ<sub>β</sub> ~ N(0, 1), &nbsp;σ<sub>β</sub> ~ Exp(1)</span><span class="gloss">priors débiles centrados en cero, sin dirección asumida para el efecto</span></div>
   </div>
@@ -178,7 +178,7 @@
   <div class="kicker">Resultados</div>
   <h1>Repetir todas las instrucciones desperdicia tokens en 9 de 12</h1>
   <div class="fig"><img src="figures/policy.png" alt="Ganancia de refuerzo por instrucción"></div>
-  <p class="cap">una ganancia baja no licencia descartar una regla de seguridad, solo ahorra repetición en preferencias ordinarias</p>
+  <p class="cap">una ganancia baja no justifica descartar una regla de seguridad, solo ahorra repetición en preferencias ordinarias</p>
 </section>
 
 <!-- 12 R4 invarianza -->
@@ -194,7 +194,7 @@
 <section class="slide">
   <div class="kicker">Implicación</div>
   <h1>Una salvaguarda es una instrucción más, y el promedio puede esconder su caída</h1>
-  <p>Una preferencia de código y un guardrail son el mismo objeto, a saber una instrucción dicha una vez que compite por atención, de modo que la retención medida acá es un stand-in de cómo aguantaría una salvaguarda declarada.</p>
+  <p>Una preferencia de código y un guardrail son el mismo objeto, a saber una instrucción dicha una vez que compite por atención, por lo que la retención medida acá es un proxy de cómo aguantaría una salvaguarda declarada.</p>
   <p>Como la seguridad es conjuntiva, el cumplimiento agregado puede verse alto mientras la única regla que importa ya cayó, y por eso un agente desplegado necesita monitoreo por instrucción.</p>
 </section>
 
@@ -204,7 +204,7 @@
   <h1>La retención es medible, despareja y accionable</h1>
   <ul>
     <li>La heterogeneidad entre instrucciones es grande, con efectos de −2,4 a +5,4 log-odds y σ<sub>β</sub> = 2,1.</li>
-    <li>Solo 3 de 12 instrucciones pagan el refuerzo, whereas una política uniforme gasta en las 12.</li>
+    <li>Solo 3 de 12 instrucciones pagan el refuerzo, mientras que una política uniforme gasta en las 12.</li>
     <li>El marco per-instrucción habilita monitoreo selectivo, con BKT como dirección natural.</li>
   </ul>
   <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions</p>
@@ -252,9 +252,9 @@
   <div class="kicker">Backup, trabajo posterior</div>
   <h1>El trabajo de 2026 confirma la dirección con menor resolución</h1>
   <ul>
-    <li>Omission vs commission (arXiv 2604.20911) encuentra que las prohibiciones decaen del 73% al 33% whereas los requerimientos se mantienen, con señales de auditoría que se ven sanas mientras la restricción ya falló.</li>
+    <li>Omission vs commission (arXiv 2604.20911) encuentra que las prohibiciones decaen del 73% al 33% mientras que los requerimientos se mantienen, con señales de auditoría que se ven sanas mientras la restricción ya falló.</li>
     <li>Governance Decay (2606.22528) muestra salvaguardas borradas silenciosamente al compactar contexto.</li>
-    <li>Ambos miden a nivel de categoría, whereas este trabajo estima un efecto por instrucción individual.</li>
+    <li>Ambos miden a nivel de categoría; este trabajo, en cambio, estima un efecto por instrucción individual.</li>
   </ul>
 </section>
 
