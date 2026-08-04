@@ -59,7 +59,6 @@
   .tl-test { flex: 6; background: var(--ink); }
   .tl-marks { position: relative; width: 84vw; height: 5.2vh; }
   .tl-marks span { position: absolute; top: 0; font-size: 2.2vh; color: var(--accent); font-weight: 600; }
-  .eq { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 4.2vh; text-align: center; padding: 1.5vh 0; }
   .footer-counter {
     position: fixed; right: 2.2vw; bottom: 2.8vh;
     font-size: 2vh; color: var(--faint); font-variant-numeric: tabular-nums;
@@ -77,7 +76,7 @@
 
 <!-- 1 · título -->
 <section class="slide title-slide">
-  <div class="venue">55 JAIIO · ASAID 2026</div>
+  <div class="venue">55 JAIIO, ASAID 2026</div>
   <h1>Not All Instructions Are<br>Forgotten <span class="hl">Equal</span></h1>
   <div class="author">Tomás Korenblit</div>
   <div class="affil">Licenciatura en Ciencia de Datos, UNSAM</div>
@@ -116,12 +115,12 @@
   <div class="kicker">Método</div>
   <h1>Sesiones de código de 25 turnos con 12 preferencias plantadas al pasar</h1>
   <div class="timeline">
-    <div class="tl-inject">turnos 0 a 19 · se inyectan archivos del codebase (98K a 203K tokens)</div>
-    <div class="tl-test">20 a 25 · prueba</div>
+    <div class="tl-inject">turnos 0 a 19 (inyección de archivos del codebase, 98K a 203K tokens)</div>
+    <div class="tl-test">20 a 25 (prueba)</div>
   </div>
   <div class="tl-marks">
-    <span style="left: 6%">↑ 6 tempranas (turnos 1 a 7)</span>
-    <span style="left: 52%">↑ 6 tardías (14 a 19)</span>
+    <span style="left: 6%">6 tempranas (turnos 1 a 7)</span>
+    <span style="left: 52%">6 tardías (turnos 14 a 19)</span>
   </div>
   <p class="note">Cada preferencia se pide como un comentario casual del usuario, y el código generado en los turnos de prueba se puntúa con checkers determinísticos en una escala ordinal de 0 a 3. El baseline corre las mismas sesiones sin plantar nada.</p>
 </section>
@@ -130,8 +129,7 @@
 <section class="slide">
   <div class="kicker">Método</div>
   <h1>Una regresión logística ordenada estima un efecto por instrucción</h1>
-  <div class="eq">η = α<sub>d</sub> + β<sub>d</sub> · told</div>
-  <p>Cada tipo de decisión d tiene su intercepto α<sub>d</sub> (qué hace el modelo por defecto) y su efecto β<sub>d</sub> (cuánto ayuda decirlo), con partial pooling que protege contra los pocos datos por celda.</p>
+  <p>Cada tipo de decisión tiene su propio intercepto, que captura qué hace el modelo por defecto, y su propio efecto de tratamiento, que mide cuánto ayuda pedirlo, con partial pooling que protege contra los pocos datos por celda.</p>
   <p class="note">244 observaciones, 28 conversaciones, 5 modelos, 3 codebases. σ<sub>β</sub> = 2,1 mide cuánto varían las instrucciones entre sí.</p>
 </section>
 
@@ -199,7 +197,7 @@
     <li>Solo 3 de 12 instrucciones pagan el refuerzo, whereas una política uniforme gasta en las 12.</li>
     <li>El marco per-instrucción habilita monitoreo selectivo, con BKT como dirección natural.</li>
   </ul>
-  <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions · gracias</p>
+  <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions</p>
 </section>
 
 <!-- 15 · divider backup -->
@@ -209,7 +207,7 @@
 
 <!-- 16 · backup ppc -->
 <section class="slide backup">
-  <div class="kicker">Backup · diagnósticos</div>
+  <div class="kicker">Backup, diagnósticos</div>
   <h1>El modelo reproduce la distribución observada</h1>
   <div class="fig"><img src="figures/ppc.png" alt="Posterior predictive check"></div>
   <p class="cap">cero divergencias, R̂ ≤ 1,01, ESS mínimo 1311, medias 1,70 (baseline) y 2,16 (treatment)</p>
@@ -217,14 +215,14 @@
 
 <!-- 17 · backup ppc por decisión -->
 <section class="slide backup">
-  <div class="kicker">Backup · diagnósticos</div>
+  <div class="kicker">Backup, diagnósticos</div>
   <h1>Las 12 medias observadas caen dentro del intervalo predictivo del 90%</h1>
   <div class="fig"><img src="figures/ppc_decision.png" alt="PPC por decisión"></div>
 </section>
 
 <!-- 18 · backup modelo -->
 <section class="slide backup">
-  <div class="kicker">Backup · especificación</div>
+  <div class="kicker">Backup, especificación</div>
   <h1>Especificación completa del modelo</h1>
   <p>Ordered logit con cutpoints ordenados por incrementos positivos, efectos jerárquicos no centrados por tipo de decisión, y priors débilmente informativos en escala log-odds, a saber μ<sub>α</sub> ~ N(0, 1.5), μ<sub>β</sub> ~ N(0, 1) centrado en cero, σ ~ Exp(1).</p>
   <p class="note">PyMC con sampler nutpie (NUTS), 4 cadenas de 1000 draws tras 1000 de tuning. Prior y posterior predictive checks en el repo.</p>
@@ -232,15 +230,15 @@
 
 <!-- 19 · backup artefacto -->
 <section class="slide backup">
-  <div class="kicker">Backup · el efecto negativo</div>
+  <div class="kicker">Backup, el efecto negativo</div>
   <h1>Por qué leemos dependencies no new como artefacto</h1>
   <p>El checker cuenta cualquier sentencia import como nueva, incluidos los imports ya presentes que el modelo vuelve a mostrar al reescribir un archivo, de modo que el puntaje castiga una conducta que la instrucción no prohíbe.</p>
-  <p>La dirección negativa es creíble (P(β &lt; 0) = 0,98) pero la magnitud queda abierta, y separar la negación del contenido (comparar «avoid new imports» con «use only existing imports») lo resolvería.</p>
+  <p>La dirección negativa es creíble (P(β &lt; 0) = 0,98) pero la magnitud queda abierta, y separar la negación del contenido (comparar "avoid new imports" con "use only existing imports") lo resolvería.</p>
 </section>
 
 <!-- 20 · backup related work 2026 -->
 <section class="slide backup">
-  <div class="kicker">Backup · trabajo posterior</div>
+  <div class="kicker">Backup, trabajo posterior</div>
   <h1>El trabajo de 2026 confirma la dirección con menor resolución</h1>
   <ul>
     <li>Omission vs commission (arXiv 2604.20911) encuentra que las prohibiciones decaen del 73% al 33% whereas los requerimientos se mantienen, con señales de auditoría que se ven sanas mientras la restricción ya falló.</li>
@@ -251,7 +249,7 @@
 
 <!-- 21 · backup robustez -->
 <section class="slide backup">
-  <div class="kicker">Backup · robustez</div>
+  <div class="kicker">Backup, robustez</div>
   <h1>Los hallazgos sobreviven los chequeos de robustez</h1>
   <p>Bajo un refit solo-Qwen (baseline y treatment del mismo modelo) dos de los tres efectos positivos retienen su HDI sobre cero, y el ranking de refuerzo se mantiene estable.</p>
   <p class="note">Sensibilidad a priors y exclusión del sentinel −1 documentadas en el repo.</p>
