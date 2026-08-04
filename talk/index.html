@@ -5,18 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Not All Instructions Are Forgotten Equal — 55 JAIIO</title>
 <style>
+  @font-face { font-family: "Inter"; src: url("fonts/Inter-Regular.ttf"); font-weight: 400; }
+  @font-face { font-family: "Inter"; src: url("fonts/Inter-SemiBold.ttf"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("fonts/Inter-Bold.ttf"); font-weight: 700; }
+  @font-face { font-family: "Inter"; src: url("fonts/Inter-Italic.ttf"); font-weight: 400; font-style: italic; }
   :root {
     --ink: #262626;
     --muted: #6f6f6f;
     --faint: #a6a6a6;
-    --accent: #eb6834;
+    --accent: #262626;
     --surface: #fcfcfb;
     --line: #e4e2dd;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: var(--surface); }
   body {
-    font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
     color: var(--ink);
     overflow: hidden;
   }
@@ -46,7 +50,7 @@
   .title-slide .repo { font-size: 2.4vh; color: var(--muted); margin-top: 4vh; font-family: "SF Mono", Menlo, monospace; }
   .title-slide .trans { font-size: 2.6vh; color: var(--muted); font-weight: 400; letter-spacing: 0; margin-left: 0.6vw; }
 
-  .kicker { font-size: 2.4vh; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+  .kicker { font-size: 2.4vh; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
   .backup .kicker { color: var(--faint); }
 
   .stat-row { display: flex; gap: 6vw; margin-top: 1vh; }

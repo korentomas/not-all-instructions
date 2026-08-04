@@ -17,18 +17,23 @@ from scipy.special import expit
 
 NC = "../experiments-v1/analysis/retention_model.nc"
 
-ACCENT = "#eb6834"   # group in focus / HDI excludes zero
-MUTED = "#a6a6a6"    # inconclusive
-INK = "#262626"      # text, axes, negative-effect bars
-FADE = "#e6e6e6"     # deemphasized bars in build variants
-FADE_ERR = "#c8c8c8"
+# Grayscale, following the paper's figure scheme: dark for groups whose HDI
+# excludes zero (hatch marks the negative one), light gray for inconclusive.
+DARK = "#3a3a3a"     # group in focus / HDI excludes zero
+MUTED = "#c9c9c9"    # inconclusive
+INK = "#262626"      # text, axes
+FADE = "#ececec"     # deemphasized bars in build variants
+FADE_ERR = "#d4d4d4"
 
 ERR = dict(ecolor=INK, elinewidth=1.6, capsize=4, capthick=1.6)
 ERR_FADE = dict(ecolor=FADE_ERR, elinewidth=1.6, capsize=4, capthick=1.6)
 
+from matplotlib import font_manager
+for f in ("Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Inter-Italic"):
+    font_manager.fontManager.addfont(f"fonts/{f}.ttf")
+
 mpl.rcParams.update({
-    "font.family": "sans-serif",
-    "font.sans-serif": ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"],
+    "font.family": "Inter",
     "mathtext.fontset": "stixsans",
     "font.size": 17,
     "axes.labelsize": 20,
@@ -76,7 +81,7 @@ groups = np.array([
     for _, r in bs.iterrows()
 ])
 
-GROUP_COLOR = {"pos": ACCENT, "mid": MUTED, "neg": INK}
+GROUP_COLOR = {"pos": DARK, "mid": MUTED, "neg": DARK}
 GROUP_HATCH = {"pos": "", "mid": "", "neg": "///"}
 
 
@@ -101,13 +106,13 @@ def forest(stem, lit):
     ax.set_xlabel(r"Efecto del tratamiento ($\beta_d$, log-odds)")
     handles = []
     if "pos" in lit:
-        handles.append(Patch(facecolor=ACCENT, edgecolor="white",
+        handles.append(Patch(facecolor=DARK, edgecolor="white",
                              label="HDI 94% excluye 0"))
     if "mid" in lit:
         handles.append(Patch(facecolor=MUTED, edgecolor="white",
                              label="No concluyente"))
     if "neg" in lit:
-        handles.append(Patch(facecolor=INK, edgecolor="white", hatch="///",
+        handles.append(Patch(facecolor=DARK, edgecolor="white", hatch="///",
                              label="Efecto negativo"))
     ax.legend(handles=handles, loc="lower right", frameon=False)
     style(ax)
@@ -128,12 +133,12 @@ for k in range(len(decisions)):
             means[k, t] = obs[m].mean()
 order = np.argsort(-(np.nan_to_num(means[:, 1]) - np.nan_to_num(means[:, 0])))
 
-fig, ax = plt.subplots(figsize=(9.6, 4.8))
+fig, ax = plt.subplots(figsize=(9.6, 5.6))
 x = np.arange(len(decisions))
 w = 0.4
 ax.bar(x - w / 2, means[order, 0], width=w, color=MUTED,
        edgecolor="white", linewidth=1.5, label="Sin instrucción (baseline)")
-ax.bar(x + w / 2, means[order, 1], width=w, color=ACCENT,
+ax.bar(x + w / 2, means[order, 1], width=w, color=DARK,
        edgecolor="white", linewidth=1.5, label="Con instrucción (treatment)")
 ax.set_xticks(x)
 ax.set_xticklabels([label(decisions[i]) for i in order],
@@ -141,8 +146,8 @@ ax.set_xticklabels([label(decisions[i]) for i in order],
 ax.set_ylabel("Puntaje medio")
 ax.set_yticks([0, 1, 2, 3])
 ax.set_ylim(0, 3.15)
-ax.legend(frameon=False, loc="upper center", ncol=2,
-          bbox_to_anchor=(0.5, 1.16))
+ax.legend(frameon=False, loc="lower center", ncol=2,
+          bbox_to_anchor=(0.5, 1.02))
 style(ax)
 fig.tight_layout()
 save(fig, "raw_landscape")
@@ -160,9 +165,9 @@ fig, ax = plt.subplots(figsize=(9.6, 4.8))
 y = np.arange(len(decisions))
 for i, k in enumerate(gorder):
     if ghdi[0, k] > 0:
-        col, hatch = ACCENT, ""
+        col, hatch = DARK, ""
     elif ghdi[1, k] < 0:
-        col, hatch = INK, "///"
+        col, hatch = DARK, "///"
     else:
         col, hatch = MUTED, ""
     bar = ax.barh(i, gmean[k], xerr=[[gmean[k] - ghdi[0, k]], [ghdi[1, k] - gmean[k]]],
@@ -174,12 +179,12 @@ ax.axvline(0, color=INK, lw=1.2, ls="--", zorder=1)
 ax.set_yticks(y)
 ax.set_yticklabels([label(decisions[k]) for k in gorder])
 ax.set_xlabel(r"$\Delta P(\mathrm{score} \geq 2)$ al repetir la instrucción")
-leg = [Patch(facecolor=ACCENT, edgecolor="white", label="Reforzar"),
+leg = [Patch(facecolor=DARK, edgecolor="white", label="Reforzar"),
        Patch(facecolor=MUTED, edgecolor="white", label="Incierto"),
-       Patch(facecolor=INK, edgecolor="white", hatch="///",
+       Patch(facecolor=DARK, edgecolor="white", hatch="///",
              label="Refuerzo dañino")]
 ax.legend(handles=leg, loc="lower left", frameon=False,
-          bbox_to_anchor=(0.02, 0.02))
+          bbox_to_anchor=(0.01, 0.01), handletextpad=0.5)
 style(ax)
 fig.tight_layout()
 save(fig, "policy")
@@ -195,7 +200,7 @@ omb, omt = obs[base_m].mean(), obs[treat_m].mean()
 
 fig, (axL, axR) = plt.subplots(1, 2, figsize=(9.6, 4.2))
 w = 0.4
-axL.bar(levels - w / 2, obs_prop, width=w, color=INK,
+axL.bar(levels - w / 2, obs_prop, width=w, color=DARK,
         edgecolor="white", linewidth=1.5, label="Observado")
 axL.bar(levels + w / 2, pred_prop, width=w, color=MUTED, yerr=pred_sd,
         edgecolor="white", linewidth=1.5, label="Predicho", error_kw=ERR)
@@ -208,9 +213,9 @@ style(axL)
 
 bins = np.linspace(min(ppb.min(), ppt.min()), max(ppb.max(), ppt.max()), 40)
 axR.hist(ppb, bins=bins, density=True, color=MUTED, alpha=0.85)
-axR.hist(ppt, bins=bins, density=True, color=ACCENT, alpha=0.7)
+axR.hist(ppt, bins=bins, density=True, color=DARK, alpha=0.6)
 axR.axvline(omb, color=INK, lw=2.2, ls="--", label=f"Baseline ({omb:.2f})")
-axR.axvline(omt, color=ACCENT, lw=2.2, label=f"Treatment ({omt:.2f})")
+axR.axvline(omt, color=INK, lw=2.2, label=f"Treatment ({omt:.2f})")
 axR.set_xlabel("Puntaje medio")
 axR.set_ylabel("Densidad")
 axR.set_ylim(top=axR.get_ylim()[1] * 1.2)
@@ -236,15 +241,15 @@ fig, ax = plt.subplots(figsize=(9.6, 4.8))
 y = np.arange(len(decisions))
 ax.errorbar(pp_means[dorder], y,
             xerr=[pp_means[dorder] - lo[dorder], hi[dorder] - pp_means[dorder]],
-            fmt="s", color=MUTED, markersize=9, zorder=2, **ERR)
-ax.scatter(obs_means[dorder], y, color=ACCENT, s=80, zorder=3)
+            fmt="s", color="#8a8a8a", markersize=9, zorder=2, **ERR)
+ax.scatter(obs_means[dorder], y, color="black", s=80, zorder=3)
 ax.set_yticks(y)
 ax.set_yticklabels([label(decisions[i]) for i in dorder])
 ax.set_xlabel("Puntaje medio")
 ax.set_ylim(-0.7, len(decisions) - 1 + 0.9)
-leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor=ACCENT,
+leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="black",
               markersize=10, label="Observado"),
-       Line2D([0], [0], marker="s", color="none", markerfacecolor=MUTED,
+       Line2D([0], [0], marker="s", color="none", markerfacecolor="#8a8a8a",
               markersize=10, label="Predicho (PI 90%)")]
 ax.legend(handles=leg, frameon=False, loc="lower right")
 style(ax)
