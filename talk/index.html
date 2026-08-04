@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not All Instructions Are Forgotten Equal — 55 JAIIO</title>
+<style>
+  :root {
+    --ink: #262626;
+    --muted: #6f6f6f;
+    --faint: #a6a6a6;
+    --accent: #eb6834;
+    --surface: #fcfcfb;
+    --line: #e4e2dd;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: var(--surface); }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6vh 8vw;
+    gap: 3.2vh;
+  }
+  .slide.active { display: flex; }
+  h1 { font-size: 5.6vh; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; max-width: 84vw; }
+  h1 .hl { color: var(--accent); }
+  p, li { font-size: 3.4vh; line-height: 1.5; color: var(--ink); max-width: 78vw; }
+  p.note { font-size: 2.6vh; color: var(--muted); }
+  .fig { display: flex; justify-content: center; align-items: center; min-height: 0; flex: 0 1 auto; }
+  .fig img { max-width: 86vw; max-height: 62vh; object-fit: contain; }
+  .cap { font-size: 2.4vh; color: var(--muted); text-align: center; }
+
+  .title-slide { align-items: flex-start; justify-content: center; gap: 2.4vh; }
+  .title-slide .venue { font-size: 2.8vh; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .title-slide h1 { font-size: 7.4vh; }
+  .title-slide .author { font-size: 3.4vh; margin-top: 2vh; }
+  .title-slide .affil { font-size: 2.7vh; color: var(--muted); }
+  .title-slide .repo { font-size: 2.4vh; color: var(--muted); margin-top: 4vh; font-family: "SF Mono", Menlo, monospace; }
+
+  .kicker { font-size: 2.4vh; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+  .backup .kicker { color: var(--faint); }
+
+  .stat-row { display: flex; gap: 6vw; margin-top: 1vh; }
+  .stat { display: flex; flex-direction: column; gap: 0.6vh; }
+  .stat .n { font-size: 7vh; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat .lbl { font-size: 2.5vh; color: var(--muted); max-width: 20vw; line-height: 1.35; }
+
+  .timeline { display: flex; width: 84vw; height: 9vh; border-radius: 1.2vh; overflow: hidden; font-size: 2.3vh; font-weight: 600; }
+  .timeline div { display: flex; align-items: center; justify-content: center; text-align: center; color: #fff; line-height: 1.25; padding: 0 0.5vw; }
+  .tl-inject { flex: 20; background: var(--faint); }
+  .tl-test { flex: 6; background: var(--ink); }
+  .tl-marks { position: relative; width: 84vw; height: 5.2vh; }
+  .tl-marks span { position: absolute; top: 0; font-size: 2.2vh; color: var(--accent); font-weight: 600; }
+  .eq { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 4.2vh; text-align: center; padding: 1.5vh 0; }
+  .footer-counter {
+    position: fixed; right: 2.2vw; bottom: 2.8vh;
+    font-size: 2vh; color: var(--faint); font-variant-numeric: tabular-nums;
+    z-index: 10;
+  }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 1.8vh; }
+  ul li { padding-left: 3.2vh; position: relative; }
+  ul li::before { content: ""; position: absolute; left: 0; top: 1.35vh; width: 1.5vh; height: 1.5vh; border-radius: 50%; background: var(--accent); }
+  .backup ul li::before { background: var(--faint); }
+  .divider { align-items: center; text-align: center; }
+  .divider h1 { color: var(--faint); }
+</style>
+</head>
+<body>
+
+<!-- 1 · título -->
+<section class="slide title-slide">
+  <div class="venue">55 JAIIO · ASAID 2026</div>
+  <h1>Not All Instructions Are<br>Forgotten <span class="hl">Equal</span></h1>
+  <div class="author">Tomás Korenblit</div>
+  <div class="affil">Licenciatura en Ciencia de Datos, UNSAM</div>
+  <div class="repo">github.com/korentomas/not-all-instructions</div>
+</section>
+
+<!-- 2 · apertura 1 -->
+<section class="slide">
+  <div class="kicker">El problema</div>
+  <h1>Un agente recibe sus instrucciones una sola vez, y tienen que valer durante toda la corrida</h1>
+  <p>Los agentes LLM corren cientos de turnos llamando herramientas sin que nadie revise cada paso, whereas sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
+  <p class="note">Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
+</section>
+
+<!-- 3 · apertura 2 -->
+<section class="slide">
+  <div class="kicker">El problema</div>
+  <h1>La adherencia se degrada con el contexto, y el promedio no dice cuál instrucción cayó</h1>
+  <p>La caída promedio documentada es del 39% en configuraciones multi-turno (Laban et al., 2025), porque la atención no se distribuye uniforme sobre la ventana.</p>
+  <p>Los estudios existentes reportan adherencia promedio sobre conjuntos de instrucciones, un número que no identifica cuál regla se perdió.</p>
+</section>
+
+<!-- 4 · forecast -->
+<section class="slide">
+  <div class="kicker">Este trabajo</div>
+  <h1>Medimos la retención instrucción por instrucción, y resulta muy despareja</h1>
+  <div class="stat-row">
+    <div class="stat"><span class="n">−2,4 a +5,4</span><span class="lbl">rango del efecto de repetir, en log-odds</span></div>
+    <div class="stat"><span class="n">3 de 12</span><span class="lbl">instrucciones se benefician de ser repetidas</span></div>
+    <div class="stat"><span class="n">8 de 12</span><span class="lbl">ya se cumplen por defecto</span></div>
+  </div>
+</section>
+
+<!-- 5 · método protocolo -->
+<section class="slide">
+  <div class="kicker">Método</div>
+  <h1>Sesiones de código de 25 turnos con 12 preferencias plantadas al pasar</h1>
+  <div class="timeline">
+    <div class="tl-inject">turnos 0 a 19 · se inyectan archivos del codebase (98K a 203K tokens)</div>
+    <div class="tl-test">20 a 25 · prueba</div>
+  </div>
+  <div class="tl-marks">
+    <span style="left: 6%">↑ 6 tempranas (turnos 1 a 7)</span>
+    <span style="left: 52%">↑ 6 tardías (14 a 19)</span>
+  </div>
+  <p class="note">Cada preferencia se pide como un comentario casual del usuario, y el código generado en los turnos de prueba se puntúa con checkers determinísticos en una escala ordinal de 0 a 3. El baseline corre las mismas sesiones sin plantar nada.</p>
+</section>
+
+<!-- 6 · método modelo -->
+<section class="slide">
+  <div class="kicker">Método</div>
+  <h1>Una regresión logística ordenada estima un efecto por instrucción</h1>
+  <div class="eq">η = α<sub>d</sub> + β<sub>d</sub> · told</div>
+  <p>Cada tipo de decisión d tiene su intercepto α<sub>d</sub> (qué hace el modelo por defecto) y su efecto β<sub>d</sub> (cuánto ayuda decirlo), con partial pooling que protege contra los pocos datos por celda.</p>
+  <p class="note">244 observaciones, 28 conversaciones, 5 modelos, 3 codebases. σ<sub>β</sub> = 2,1 mide cuánto varían las instrucciones entre sí.</p>
+</section>
+
+<!-- 7 · R1 datos crudos -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Los datos crudos ya muestran tres patrones distintos</h1>
+  <div class="fig"><img src="figures/raw_landscape.png" alt="Puntaje medio por decisión, baseline vs treatment"></div>
+</section>
+
+<!-- 8 · R2 forest b1 -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Tres instrucciones se benefician de ser repetidas</h1>
+  <div class="fig"><img src="figures/forest_b1.png" alt="Forest plot, grupo con HDI sobre cero"></div>
+  <p class="cap">testing parametrize pasa de no usarse nunca (baseline 0,00) a retenerse cuando se pide (β = 5,4)</p>
+</section>
+
+<!-- 9 · R2 forest b2 -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Ocho ya se cumplen por defecto, así que repetirlas no cambia nada</h1>
+  <div class="fig"><img src="figures/forest_b2.png" alt="Forest plot, se agrega el grupo no concluyente"></div>
+</section>
+
+<!-- 10 · R2 forest full -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Una empeora al repetirla, aunque sospechamos un artefacto de medición</h1>
+  <div class="fig"><img src="figures/forest_full.png" alt="Forest plot completo"></div>
+  <p class="cap">el checker de dependencies no new cuenta como nuevo cualquier import, incluidos los ya presentes en el archivo</p>
+</section>
+
+<!-- 11 · R3 política -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Repetir todas las instrucciones desperdicia tokens en 9 de 12</h1>
+  <div class="fig"><img src="figures/policy.png" alt="Ganancia de refuerzo por instrucción"></div>
+  <p class="cap">una ganancia baja no licencia descartar una regla de seguridad, solo ahorra repetición en preferencias ordinarias</p>
+</section>
+
+<!-- 12 · R4 invarianza -->
+<section class="slide">
+  <div class="kicker">Resultados</div>
+  <h1>Ni el modelo ni el codebase explican la variación</h1>
+  <p>Los interceptos por modelo y por codebase concentran su posterior cerca de cero (σ ≈ 0,3), de modo que la heterogeneidad vive en las instrucciones y no en quién ejecuta ni dónde.</p>
+  <p>La retención tampoco sube de 26B a 120B parámetros, así que la desigualdad no es capacidad disfrazada.</p>
+  <p class="note">Con baseline de un solo modelo esto sostiene invarianza débil, no ausencia de efectos por modelo.</p>
+</section>
+
+<!-- 13 · discusión -->
+<section class="slide">
+  <div class="kicker">Implicación</div>
+  <h1>Una salvaguarda es una instrucción más, y el promedio puede esconder su caída</h1>
+  <p>Una preferencia de código y un guardrail son el mismo objeto, a saber una instrucción dicha una vez que compite por atención, de modo que la retención medida acá es un stand-in de cómo aguantaría una salvaguarda declarada.</p>
+  <p>Como la seguridad es conjuntiva, el cumplimiento agregado puede verse alto mientras la única regla que importa ya cayó, y por eso un agente desplegado necesita monitoreo por instrucción.</p>
+</section>
+
+<!-- 14 · conclusión -->
+<section class="slide">
+  <div class="kicker">Conclusión</div>
+  <h1>La retención es medible, despareja y accionable</h1>
+  <ul>
+    <li>La heterogeneidad entre instrucciones es grande, con efectos de −2,4 a +5,4 log-odds y σ<sub>β</sub> = 2,1.</li>
+    <li>Solo 3 de 12 instrucciones pagan el refuerzo, whereas una política uniforme gasta en las 12.</li>
+    <li>El marco per-instrucción habilita monitoreo selectivo, con BKT como dirección natural.</li>
+  </ul>
+  <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions · gracias</p>
+</section>
+
+<!-- 15 · divider backup -->
+<section class="slide divider backup">
+  <h1>Backup</h1>
+</section>
+
+<!-- 16 · backup ppc -->
+<section class="slide backup">
+  <div class="kicker">Backup · diagnósticos</div>
+  <h1>El modelo reproduce la distribución observada</h1>
+  <div class="fig"><img src="figures/ppc.png" alt="Posterior predictive check"></div>
+  <p class="cap">cero divergencias, R̂ ≤ 1,01, ESS mínimo 1311, medias 1,70 (baseline) y 2,16 (treatment)</p>
+</section>
+
+<!-- 17 · backup ppc por decisión -->
+<section class="slide backup">
+  <div class="kicker">Backup · diagnósticos</div>
+  <h1>Las 12 medias observadas caen dentro del intervalo predictivo del 90%</h1>
+  <div class="fig"><img src="figures/ppc_decision.png" alt="PPC por decisión"></div>
+</section>
+
+<!-- 18 · backup modelo -->
+<section class="slide backup">
+  <div class="kicker">Backup · especificación</div>
+  <h1>Especificación completa del modelo</h1>
+  <p>Ordered logit con cutpoints ordenados por incrementos positivos, efectos jerárquicos no centrados por tipo de decisión, y priors débilmente informativos en escala log-odds, a saber μ<sub>α</sub> ~ N(0, 1.5), μ<sub>β</sub> ~ N(0, 1) centrado en cero, σ ~ Exp(1).</p>
+  <p class="note">PyMC con sampler nutpie (NUTS), 4 cadenas de 1000 draws tras 1000 de tuning. Prior y posterior predictive checks en el repo.</p>
+</section>
+
+<!-- 19 · backup artefacto -->
+<section class="slide backup">
+  <div class="kicker">Backup · el efecto negativo</div>
+  <h1>Por qué leemos dependencies no new como artefacto</h1>
+  <p>El checker cuenta cualquier sentencia import como nueva, incluidos los imports ya presentes que el modelo vuelve a mostrar al reescribir un archivo, de modo que el puntaje castiga una conducta que la instrucción no prohíbe.</p>
+  <p>La dirección negativa es creíble (P(β &lt; 0) = 0,98) pero la magnitud queda abierta, y separar la negación del contenido (comparar «avoid new imports» con «use only existing imports») lo resolvería.</p>
+</section>
+
+<!-- 20 · backup related work 2026 -->
+<section class="slide backup">
+  <div class="kicker">Backup · trabajo posterior</div>
+  <h1>El trabajo de 2026 confirma la dirección con menor resolución</h1>
+  <ul>
+    <li>Omission vs commission (arXiv 2604.20911) encuentra que las prohibiciones decaen del 73% al 33% whereas los requerimientos se mantienen, con señales de auditoría que se ven sanas mientras la restricción ya falló.</li>
+    <li>Governance Decay (2606.22528) muestra salvaguardas borradas silenciosamente al compactar contexto.</li>
+    <li>Ambos miden a nivel de categoría, whereas este trabajo estima un efecto por instrucción individual.</li>
+  </ul>
+</section>
+
+<!-- 21 · backup robustez -->
+<section class="slide backup">
+  <div class="kicker">Backup · robustez</div>
+  <h1>Los hallazgos sobreviven los chequeos de robustez</h1>
+  <p>Bajo un refit solo-Qwen (baseline y treatment del mismo modelo) dos de los tres efectos positivos retienen su HDI sobre cero, y el ranking de refuerzo se mantiene estable.</p>
+  <p class="note">Sensibilidad a priors y exclusión del sentinel −1 documentadas en el repo.</p>
+</section>
+
+<div class="footer-counter"><span id="cur">1</span> / <span id="tot"></span></div>
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const cur = document.getElementById("cur");
+  document.getElementById("tot").textContent = slides.length;
+  let i = Math.min(slides.length - 1, Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+
+  function show(n) {
+    i = Math.min(slides.length - 1, Math.max(0, n));
+    slides.forEach((s, k) => s.classList.toggle("active", k === i));
+    cur.textContent = i + 1;
+    history.replaceState(null, "", "#" + (i + 1));
+  }
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key.toLowerCase() === "f") {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+  });
+  addEventListener("hashchange", () => {
+    const n = (parseInt(location.hash.slice(1), 10) || 1) - 1;
+    if (n !== i) show(n);
+  });
+  addEventListener("click", (e) => {
+    if (e.clientX > innerWidth / 2) show(i + 1); else show(i - 1);
+  });
+  show(i);
+</script>
+</body>
+</html>
