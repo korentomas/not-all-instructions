@@ -114,7 +114,8 @@ def forest(stem, lit):
     if "neg" in lit:
         handles.append(Patch(facecolor=DARK, edgecolor="white", hatch="///",
                              label="Efecto negativo"))
-    ax.legend(handles=handles, loc="lower right", frameon=False)
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1.0),
+              frameon=False)
     style(ax)
     fig.tight_layout()
     save(fig, stem)
@@ -133,7 +134,7 @@ for k in range(len(decisions)):
             means[k, t] = obs[m].mean()
 order = np.argsort(-(np.nan_to_num(means[:, 1]) - np.nan_to_num(means[:, 0])))
 
-fig, ax = plt.subplots(figsize=(9.6, 5.6))
+fig, ax = plt.subplots(figsize=(13.5, 5.6))
 x = np.arange(len(decisions))
 w = 0.4
 ax.bar(x - w / 2, means[order, 0], width=w, color=MUTED,
@@ -146,8 +147,8 @@ ax.set_xticklabels([label(decisions[i]) for i in order],
 ax.set_ylabel("Puntaje medio")
 ax.set_yticks([0, 1, 2, 3])
 ax.set_ylim(0, 3.15)
-ax.legend(frameon=False, loc="lower center", ncol=2,
-          bbox_to_anchor=(0.5, 1.02))
+ax.legend(frameon=False, loc="upper left", ncol=1,
+          bbox_to_anchor=(1.02, 1.0))
 style(ax)
 fig.tight_layout()
 save(fig, "raw_landscape")
@@ -183,8 +184,8 @@ leg = [Patch(facecolor=DARK, edgecolor="white", label="Reforzar"),
        Patch(facecolor=MUTED, edgecolor="white", label="Incierto"),
        Patch(facecolor=DARK, edgecolor="white", hatch="///",
              label="Refuerzo dañino")]
-ax.legend(handles=leg, loc="lower left", frameon=False,
-          bbox_to_anchor=(0.01, 0.01), handletextpad=0.5)
+ax.legend(handles=leg, loc="upper left", frameon=False,
+          bbox_to_anchor=(1.02, 1.0))
 style(ax)
 fig.tight_layout()
 save(fig, "policy")
@@ -208,7 +209,7 @@ axL.set_xlabel("Puntaje")
 axL.set_ylabel("Proporción")
 axL.set_xticks(levels)
 axL.set_ylim(0, max(obs_prop.max(), (pred_prop + pred_sd).max()) * 1.3)
-axL.legend(frameon=False, loc="upper left")
+axL.legend(frameon=False, loc="lower right", bbox_to_anchor=(1.0, 1.02))
 style(axL)
 
 bins = np.linspace(min(ppb.min(), ppt.min()), max(ppb.max(), ppt.max()), 40)
@@ -219,7 +220,7 @@ axR.axvline(omt, color=INK, lw=2.2, label=f"Treatment ({omt:.2f})")
 axR.set_xlabel("Puntaje medio")
 axR.set_ylabel("Densidad")
 axR.set_ylim(top=axR.get_ylim()[1] * 1.2)
-axR.legend(frameon=False, loc="upper left")
+axR.legend(frameon=False, loc="lower right", bbox_to_anchor=(1.0, 1.02))
 style(axR)
 fig.tight_layout()
 save(fig, "ppc")
@@ -251,7 +252,8 @@ leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="black",
               markersize=10, label="Observado"),
        Line2D([0], [0], marker="s", color="none", markerfacecolor="#8a8a8a",
               markersize=10, label="Predicho (PI 90%)")]
-ax.legend(handles=leg, frameon=False, loc="lower right")
+ax.legend(handles=leg, frameon=False, loc="upper left",
+          bbox_to_anchor=(1.02, 1.0))
 style(ax)
 fig.tight_layout()
 save(fig, "ppc_decision")
