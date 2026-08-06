@@ -267,42 +267,45 @@ bmean = post["beta"].values.reshape(-1, len(decisions)).mean(0)
 i_par = decisions.index("testing_parametrize")
 i_doc = decisions.index("docs_numpy_style")
 
-order12 = np.argsort(-bmean)          # forest order: biggest beta on top
-n12 = len(decisions)
-XLO, XHI = min(amean.min(), (amean + bmean).min()) - 0.8, \
-           max(amean.max(), (amean + bmean).max()) + 0.8
-fig, ax = plt.subplots(figsize=(11.5, 6.4))
+# Four decisions covering the four patterns: big jump, partial gain,
+# already-complied, and the backwards one.
+SHOW = ["testing_parametrize", "dependencies_module_constants",
+        "docs_numpy_style", "dependencies_no_new"]
+idx = [decisions.index(d) for d in SHOW]
+nshow = len(SHOW)
+XLO, XHI = -5.2, 6.8
+fig, ax = plt.subplots(figsize=(13.5, 4.8))
 edges = [XLO, *cmean, XHI]
 for k in range(4):
     ax.axvspan(edges[k], edges[k + 1],
                color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
-    ax.text((edges[k] + edges[k + 1]) / 2, n12 - 0.1, str(k), ha="center",
-            fontsize=26, fontweight="bold", color="#6f6f6f")
+    ax.text((edges[k] + edges[k + 1]) / 2, nshow - 0.25, str(k), ha="center",
+            fontsize=30, fontweight="bold", color="#6f6f6f")
 for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
-    ax.axvline(cx, color=INK, lw=1.4, ls="--", zorder=1)
-    ax.text(cx, n12 + 0.75, name, ha="center", fontsize=18, color=INK)
+    ax.axvline(cx, ymin=0.24, color=INK, lw=1.4, ls="--", zorder=1)
+    ax.text(cx, nshow + 0.55, name, ha="center", fontsize=20, color=INK)
 
-for row, i in enumerate(order12):
-    yy = n12 - 1 - row
+for row, i in enumerate(idx):
+    yy = nshow - 1 - row
     x0, x1 = amean[i], amean[i] + bmean[i]
-    ax.plot([x0, x1], [yy, yy], color="#7f7f7f", lw=1.6, zorder=2)
-    ax.scatter([x0], [yy], s=110, facecolor="white", edgecolor=INK,
-               linewidth=2.0, zorder=3)
-    ax.scatter([x1], [yy], s=110, color=INK, zorder=3)
+    ax.plot([x0, x1], [yy, yy], color="#7f7f7f", lw=1.8, zorder=2)
+    ax.scatter([x0], [yy], s=150, facecolor="white", edgecolor=INK,
+               linewidth=2.2, zorder=3)
+    ax.scatter([x1], [yy], s=150, color=INK, zorder=3)
 
 ax.set_xlim(XLO, XHI)
-ax.set_ylim(-0.7, n12 + 1.3)
-ax.set_yticks(range(n12))
-ax.set_yticklabels([label(decisions[i]) for i in order12[::-1]])
+ax.set_ylim(-1.6, nshow + 1.1)
+ax.set_yticks(range(nshow))
+ax.set_yticklabels([label(d) for d in SHOW[::-1]])
 ax.set_xlabel(r"Cumplimiento latente $\eta$ (log-odds)")
 ax.spines[["top", "right", "left"]].set_visible(False)
 leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
-              markeredgecolor=INK, markeredgewidth=2, markersize=11,
+              markeredgecolor=INK, markeredgewidth=2, markersize=12,
               label="Sin instrucción ($\\alpha_d$)"),
        Line2D([0], [0], marker="o", color="none", markerfacecolor=INK,
-              markersize=11, label="Con instrucción ($\\alpha_d + \\beta_d$)")]
-ax.legend(handles=leg, loc="upper left", bbox_to_anchor=(1.02, 1.0),
-          frameon=False)
+              markersize=12, label="Con instrucción ($\\alpha_d + \\beta_d$)")]
+ax.legend(handles=leg, loc="lower left", bbox_to_anchor=(0.01, 0.0),
+          frameon=False, ncol=2, columnspacing=1.6)
 fig.tight_layout()
 save(fig, "latent_scale")
 
