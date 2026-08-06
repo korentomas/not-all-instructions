@@ -1,0 +1,182 @@
+RUBRIC — Peer review of a research paper for 55 JAIIO / ASAID
+(Argentine Symposium on Artificial Intelligence — AI-safety & LLM-evaluation paper)
+
+Grounded in the public reviewer forms of NeurIPS, ICML, ICLR, ACL Rolling
+Review (ARR) and AAAI; the NeurIPS Paper Checklist and the ML Reproducibility
+Checklist (Pineau 2020); AAC&U VALUE rubrics (Written Communication; Inquiry &
+Analysis); APA JARS-Quant reporting standards; AI-safety venue criteria
+(SaTML, AAAI-SRRAI, SoLaR @ NeurIPS); LLM-evaluation rigor guidance
+(contamination, prompt-sensitivity, LLM-as-judge reporting); and the 55 JAIIO
+"tipos de trabajo" rules. Sources listed at the end.
+
+==============================================================================
+CONTEXT FOR THE GRADER
+==============================================================================
+A full research article submitted to JAIIO/ASAID: up to 14 pages, empirical +
+Bayesian methodology, relevant to AI safety, studying how language models retain
+user-stated instructions over long conversations. English paper with a Spanish
+title/abstract/keywords (venue requirement). Review like a venue PC member, not
+a copy editor.
+
+Following ARR, keep two axes ORTHOGONAL: SOUNDNESS (is it correct/rigorous?) is
+separate from CONTRIBUTION/EXCITEMENT (does it matter?). A paper can be sound but
+unexciting, or exciting but unsound. Score each criterion, then derive the
+overall recommendation; give your CONFIDENCE separately.
+
+For EACH criterion: assign a level (Excellent / Good / Adequate / Weak), write
+1-3 sentences of specific feedback citing the section, and assign points.
+Reward calibrated, evidence-backed claims; penalize overclaiming, decorative
+framing, and unsupported assertions.
+
+Level anchors (general; criterion-specific anchors below):
+  Excellent — exemplary; among the best of its type; nothing a reviewer flags.
+  Good      — solid; minor gaps that do not affect the conclusions.
+  Adequate  — acceptable but with real weaknesses a reviewer would raise.
+  Weak      — a substantive problem that undermines the contribution.
+
+==============================================================================
+SCORED CRITERIA (weights sum to 100)
+==============================================================================
+
+1. SOUNDNESS & METHODOLOGY — 25  (load-bearing; the universal review axis)
+   Validity of the study design and of the statistical model; validity of the
+   measurement instruments; whether artifacts/confounds are ruled out.
+   Sub-checks (LLM-evaluation rigor):
+     - Statistics as a gate: estimates carry uncertainty (intervals/error bars);
+       the variability source is stated (seeds/splits/decoding) and the method
+       named; multiple runs/epochs where stochastic. [NeurIPS checklist 7; Pineau]
+     - Model appropriateness: likelihood matched to the data (ordinal treated as
+       ordinal, not binarized/averaged); hierarchy/pooling justified; convergence
+       (R-hat, ESS, divergences), posterior predictive checks, model comparison
+       (e.g., LOO), and prior sensitivity reported.
+     - Contamination / leakage addressed where benchmarks are reused.
+     - Prompt-sensitivity and decoding robustness acknowledged (non-determinism).
+     - LLM-as-judge done right: bias-adjusted (not raw judge scores), with
+       judge model+version, agreement statistics (chance-corrected kappa/alpha),
+       and calibration; OR judge-free scoring justified.
+   Excellent: design isolates the effect; the model is justified and fully
+     checked; plausible artifacts are tested and ruled out; eval numbers are
+     statistically and contamination-robust.
+   Adequate: mostly sound but a check is missing (e.g., no model comparison, or
+     error bars without a stated source).
+   Weak: design confounds the effect, model unjustified/unchecked, or a likely
+     artifact is left unaddressed.
+
+2. CONTRIBUTION / SIGNIFICANCE / NOVELTY — 18
+   Is the contribution new and does it matter to the field? (ARR "Excitement";
+   NeurIPS/ICML/ICLR "Contribution"; AAAI "Significance of the Problem".)
+   Excellent: a clearly novel question/method/finding, explicitly differentiated
+     from prior work, that the community will build on.
+   Weak: incremental or already covered by cited work; low impact.
+
+3. CLAIMS–EVIDENCE CALIBRATION — 12
+   Does every claim carry its evidence and uncertainty? Established vs preliminary
+   separated. No claim stronger than the design supports (levels vs rates;
+   snapshot vs decay; correlation vs cause). Abstract/intro match the body.
+   [NeurIPS checklist 1: "claims match contributions and scope".]
+   Excellent: claims precisely calibrated; hedging proportionate; no abstract-body
+     mismatch.
+   Weak: overclaiming, bare point estimates, or abstract contradicts results.
+
+4. CLARITY & PRESENTATION — 10
+   Structure, prose, figures/tables. Plain, declarative, argumentative writing;
+   one claim per paragraph; figures legible and referenced; cross-refs resolve.
+   (NeurIPS/ICML/ICLR 4-point "Presentation"; AAC&U Written Communication.)
+   Excellent: the argument is followable end-to-end on first read; figures earn
+     their space.
+   Weak: confusing structure, garbled sentences, or uninformative figures.
+
+5. REPRODUCIBILITY — 12  (first-class concern; itemized per Pineau/NeurIPS)
+   Are data, code, models, prompts, temperature/token caps, seeds, exclusions,
+   eval-harness version, and scoring stated enough to reproduce? Hyperparameter
+   ranges + selection method? Compute reported? [ARR Reproducibility 1-5;
+   NeurIPS checklist 4-8; Pineau; model cards/datasheets where relevant.]
+   Excellent: a competent reader could reproduce the main results; choices and
+     exclusions are explicit; artifacts/versions disclosed.
+   Weak: key parameters, data, prompts, or code undisclosed.
+
+6. RELATED WORK & POSITIONING — 6
+   Pertinent, synthesized (not a list of isolated summaries); explains why each
+   cited work matters and where this paper sits relative to the closest work.
+   Excellent: sharp positioning against the nearest prior art.
+   Weak: missing key work, or a summary list with no synthesis.
+
+7. LIMITATIONS & HONESTY — 7  (required reflection at NeurIPS/ICML/ARR)
+   Are limitations exhaustive and self-critical? Proxy measures admitted as
+   proxies? Negative/ambiguous results reported honestly?
+   Excellent: candid, complete; the paper names its own weakest points.
+   Weak: limitations token, missing, or contradicted elsewhere.
+
+8. AI-SAFETY FRAMING / THREAT MODEL — 6  (venue-specific: ASAID)
+   Is the safety relevance a precise threat model (what fails, for whom, under
+   what conditions — e.g., unsupervised deployed agents, silent guardrail decay),
+   cited, and NOT overclaimed beyond what was tested? [SaTML; AAAI-SRRAI; SoLaR.]
+   Excellent: a concrete threat model that follows from the results without
+     claiming safety experiments that were not run.
+   Weak: safety framing decorative, vague, or overclaimed.
+
+9. ETHICS / BROADER IMPACT / RESPONSIBLE RELEASE — 4
+   Societal impact discussed; dual-use/misuse considered; responsible release of
+   any high-misuse-risk artifacts; human-subjects/data handled properly.
+   [NeurIPS Code of Ethics + checklist 9-15; ARR Limitations & Societal Impact.]
+   Excellent: impacts and any release risks addressed proportionately.
+   Weak: relevant impact/misuse considerations ignored.
+
+==============================================================================
+FORMAT & COMPLIANCE CHECKLIST  (pass/fail gate — list any failure; do NOT award
+"Strong accept" if any item fails). Per 55 JAIIO "tipos de trabajo".
+==============================================================================
+[ ] Full article, self-contained, within the 14-page limit.
+[ ] Format per venue: 55 JAIIO generic rule = A4, Times New Roman 10pt,
+    single-spaced; the ASAID/LNCS template is the alternative the symposium
+    uses — confirm which applies and that the paper is internally consistent.
+[ ] English title + abstract + keywords AND Spanish título + resumen
+    (≈150-250 words) + palabras clave.
+[ ] References in APA-7; every in-text citation has an entry and vice versa
+    (no orphans).
+[ ] ORCID present for the author(s).
+[ ] Use-of-LLMs disclosed; no LLM-generated text beyond experimental material
+    or language/readability improvement (JAIIO policy); author takes
+    responsibility.
+[ ] Review stage: anonymized (ASAI is double-blind) OR camera-ready
+    de-anonymized (author, affiliation, ORCID, email) — per the current stage.
+[ ] Figures/tables referenced in text; no unresolved refs; clean layout
+    (no overfull/garbled text).
+
+==============================================================================
+SCORING & OUTPUT
+==============================================================================
+Weighted total /100 = sum of the nine criterion points.
+Recommendation mapping (NeurIPS/ICML-style accept bands):
+  85-100  Strong accept
+  70-84   Accept
+  60-69   Borderline accept (accept with required revisions)
+  50-59   Borderline reject (major revision)
+  < 50    Reject
+Also give a CONFIDENCE self-rating (1-5): 5 certain · 4 confident · 3 fairly
+confident · 2 willing to defend but may have missed details · 1 educated guess.
+
+Report:
+  - total /100 and the recommendation band,
+  - per-criterion: level + points + 1-3 sentences of actionable feedback,
+  - the format/compliance checklist result (list failures),
+  - 3 biggest strengths,
+  - the 3 highest-priority fixes,
+  - your confidence (1-5).
+
+==============================================================================
+SOURCES
+==============================================================================
+NeurIPS Reviewer Guidelines + Paper Checklist: neurips.cc/public/guides/PaperChecklist ;
+  neurips.cc/Conferences/2024/ReviewerGuidelines ; Code of Ethics: neurips.cc/public/EthicsGuidelines
+ICML Reviewer Instructions: icml.cc/Conferences/2024/ReviewerInstructions
+ICLR Reviewer Guide: iclr.cc/Conferences/2025/ReviewerGuide
+ACL Rolling Review form + guidelines: aclrollingreview.org/reviewform ; /reviewerguidelines
+AAAI review process/criteria: aaai.org/conference/aaai/aaai-26/review-process/
+ML Reproducibility Checklist (Pineau v2.0, 2020): cs.mcgill.ca/~jpineau/ReproducibilityChecklist.pdf
+AAC&U VALUE rubrics (Written Communication; Inquiry & Analysis; Quantitative Literacy): aacu.org/value/rubrics
+APA JARS-Quant (Appelbaum et al. 2018): apastyle.apa.org/jars
+AI-safety venues: satml.org/call-for-papers ; aaai.org (SRRAI special track) ; solar-neurips.github.io
+LLM-as-judge reporting: arxiv.org/abs/2511.21140 ; contamination: arxiv.org/abs/2311.01964
+Model Cards (Mitchell 2019); Datasheets for Datasets (Gebru 2021)
+55 JAIIO tipos de trabajo: 55jaiio.sadio.org.ar/tipos-trabajo ; ASAI: sadio.org.ar JAIIO symposia pages

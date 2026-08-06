@@ -123,8 +123,10 @@ resaltado para los builds de la slide 8.
 
 ## Reglas de redacción de las slides
 
-- Título de cada slide es la afirmación, no la etiqueta ("Solo 3 de 12
-  instrucciones se benefician de repetición", no "Resultados").
+- Títulos estilo humano pre-2020 (patrón Devlin/Kaiser): etiquetas cortas de
+  dos a cuatro palabras ("Datos crudos", "Efectos por instrucción"), repetidas
+  cuando un tema ocupa varias slides. La afirmación va al cuerpo como línea
+  final en negrita (clase takeaway), que es donde esos decks ponen el remate.
 - Una idea por slide, gráficos sobre tablas, mínimo texto.
 - Sin outline slide y sin slide de literatura (las citas van inline donde
   se usan).
