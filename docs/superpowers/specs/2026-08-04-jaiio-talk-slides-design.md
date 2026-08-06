@@ -125,8 +125,9 @@ resaltado para los builds de la slide 8.
 
 - Títulos estilo humano pre-2020 (patrón Devlin/Kaiser): etiquetas cortas de
   dos a cuatro palabras ("Datos crudos", "Efectos por instrucción"), repetidas
-  cuando un tema ocupa varias slides. La afirmación va al cuerpo como línea
-  final en negrita (clase takeaway), que es donde esos decks ponen el remate.
+  cuando un tema ocupa varias slides. Sin líneas de remate en negrita al pie
+  (probadas y descartadas el 2026-08-06); la afirmación se dice hablando, y en
+  pantalla quedan solo la figura y las captions chicas en gris.
 - Una idea por slide, gráficos sobre tablas, mínimo texto.
 - Sin outline slide y sin slide de literatura (las citas van inline donde
   se usan).
