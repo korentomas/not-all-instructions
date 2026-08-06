@@ -154,7 +154,7 @@
     <span style="left: 6%">6 tempranas (turnos 1 a 7)</span>
     <span style="left: 52%">6 tardías (14 a 19)</span>
   </div>
-  <p class="note">El código generado en los turnos de prueba se puntúa con checkers determinísticos en una escala ordinal de 0 a 3. El baseline corre las mismas sesiones sin plantar nada.</p>
+  <p class="note">El código generado en los turnos de prueba se puntúa de 0 a 3 con reglas fijas, expresiones regulares que buscan el patrón pedido en el código (el decorador parametrize, los for sobre arrays). El baseline corre las mismas sesiones sin plantar nada.</p>
 </section>
 
 <!-- 5b anatomía de una conversación -->
@@ -166,7 +166,7 @@
     <div class="m-plant"><span class="m-tag">turno 3, usuario</span>"Important: when writing array operations for this project, always use NumPy broadcasting instead of for loops."</div>
     <div class="m-files"><span class="m-tag">turnos 4 a 19</span>más archivos y tareas… el contexto crece hasta 98K a 203K tokens</div>
     <div class="m-user"><span class="m-tag">turno 22, prueba</span>"Escribí las operaciones de array para normalizar estas columnas."</div>
-    <div class="m-test"><span class="m-tag">respuesta del modelo</span>código generado, que un checker determinístico puntúa de 0 a 3</div>
+    <div class="m-test"><span class="m-tag">respuesta del modelo</span>código generado, puntuado de 0 a 3 por una regla fija (regex) que busca el patrón pedido</div>
   </div>
   <p class="takeaway">Entre el pedido y la evaluación hay decenas de miles de tokens.</p>
 </section>
@@ -225,7 +225,7 @@
   <h1>Efectos por instrucción</h1>
   <div class="fig"><img src="figures/forest_full.png" alt="Forest plot completo"></div>
   <p class="takeaway">Una empeora al repetirla, aunque sospechamos un artefacto de medición.</p>
-  <p class="cap">el checker de dependencies no new cuenta como nuevo cualquier import, incluidos los ya presentes en el archivo</p>
+  <p class="cap">la regla de dependencies no new cuenta como nuevo cualquier import, incluidos los ya presentes en el archivo</p>
 </section>
 
 <!-- 11 R3 política -->
@@ -303,7 +303,7 @@
 <section class="slide backup">
   <div class="kicker">Backup, el efecto negativo</div>
   <h1>El artefacto</h1>
-  <p>El checker cuenta cualquier sentencia import como nueva, incluidos los imports ya presentes que el modelo vuelve a mostrar al reescribir un archivo, de modo que el puntaje castiga una conducta que la instrucción no prohíbe.</p>
+  <p>La regla que puntúa esta instrucción cuenta cualquier sentencia import como nueva, incluidos los imports ya presentes que el modelo vuelve a mostrar al reescribir un archivo, de modo que el puntaje castiga una conducta que la instrucción no prohíbe.</p>
   <p>La dirección negativa es creíble (P(β &lt; 0) = 0,98) pero la magnitud queda abierta, y separar la negación del contenido (comparar "avoid new imports" con "use only existing imports") lo resolvería.</p>
 </section>
 

@@ -267,34 +267,33 @@ bmean = post["beta"].values.reshape(-1, len(decisions)).mean(0)
 i_par = decisions.index("testing_parametrize")
 i_doc = decisions.index("docs_numpy_style")
 
-XLO, XHI = -5.2, 6.8
-fig, ax = plt.subplots(figsize=(11.5, 4.2))
+order12 = np.argsort(-bmean)          # forest order: biggest beta on top
+n12 = len(decisions)
+XLO, XHI = min(amean.min(), (amean + bmean).min()) - 0.8, \
+           max(amean.max(), (amean + bmean).max()) + 0.8
+fig, ax = plt.subplots(figsize=(11.5, 6.4))
 edges = [XLO, *cmean, XHI]
 for k in range(4):
     ax.axvspan(edges[k], edges[k + 1],
                color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
-    ax.text((edges[k] + edges[k + 1]) / 2, 2.55, str(k), ha="center",
-            fontsize=30, fontweight="bold", color="#8a8a8a")
+    ax.text((edges[k] + edges[k + 1]) / 2, n12 - 0.1, str(k), ha="center",
+            fontsize=26, fontweight="bold", color="#8a8a8a")
 for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
     ax.axvline(cx, color=INK, lw=1.4, ls="--", zorder=1)
-    ax.text(cx, 3.35, name, ha="center", fontsize=20, color=INK)
+    ax.text(cx, n12 + 0.75, name, ha="center", fontsize=18, color=INK)
 
-rows = [(i_par, 1.6, "testing parametrize"), (i_doc, 0.6, "docs numpy style")]
-for i, yy, name in rows:
+for row, i in enumerate(order12):
+    yy = n12 - 1 - row
     x0, x1 = amean[i], amean[i] + bmean[i]
-    ax.annotate("", xy=(x1, yy), xytext=(x0, yy),
-                arrowprops=dict(arrowstyle="-|>", color=INK, lw=2.6,
-                                shrinkA=8, shrinkB=0))
-    ax.scatter([x0], [yy], s=140, facecolor="white", edgecolor=INK,
-               linewidth=2.2, zorder=3)
-    ax.scatter([x1], [yy], s=140, color=INK, zorder=3)
-    ax.text(min(x0, x1) - 0.25, yy + 0.28,
-            f"{name}  ($\\alpha$ = {x0:.1f}, $\\beta$ = {bmean[i]:+.1f})",
-            fontsize=16, color=INK, ha="left")
+    ax.plot([x0, x1], [yy, yy], color="#8a8a8a", lw=1.6, zorder=2)
+    ax.scatter([x0], [yy], s=110, facecolor="white", edgecolor=INK,
+               linewidth=2.0, zorder=3)
+    ax.scatter([x1], [yy], s=110, color=INK, zorder=3)
 
 ax.set_xlim(XLO, XHI)
-ax.set_ylim(0, 3.8)
-ax.set_yticks([])
+ax.set_ylim(-0.7, n12 + 1.3)
+ax.set_yticks(range(n12))
+ax.set_yticklabels([label(decisions[i]) for i in order12[::-1]])
 ax.set_xlabel(r"Cumplimiento latente $\eta$ (log-odds)")
 ax.spines[["top", "right", "left"]].set_visible(False)
 leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
