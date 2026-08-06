@@ -41,8 +41,6 @@
   .fig { display: flex; justify-content: center; align-items: center; min-height: 0; flex: 0 1 auto; }
   .fig img { max-width: 86vw; max-height: 62vh; object-fit: contain; }
   .cap { font-size: 2.4vh; color: var(--muted); text-align: center; }
-  .takeaway { font-weight: 600; font-size: 3.2vh; color: var(--ink); }
-  .fig + .takeaway { text-align: center; max-width: none; align-self: center; }
 
   .title-slide { align-items: flex-start; justify-content: center; gap: 2.4vh; }
   .title-slide .venue { font-size: 2.8vh; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -117,7 +115,6 @@
   <h1>Agentes LLM</h1>
   <p>Los agentes corren cientos de turnos llamando herramientas sin que nadie revise cada paso, mientras que sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
   <p>Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
-  <p class="takeaway">Las instrucciones se dan una sola vez y tienen que valer durante toda la corrida.</p>
 </section>
 
 <!-- 3 apertura 2 -->
@@ -126,7 +123,6 @@
   <h1>Context rot</h1>
   <p>La adherencia se degrada a medida que el contexto crece, con caídas promedio documentadas del 39% en configuraciones multi-turno (Laban et al., 2025), porque la atención no se distribuye uniforme sobre la ventana.</p>
   <p>Los estudios existentes reportan adherencia promedio sobre conjuntos de instrucciones.</p>
-  <p class="takeaway">El promedio no dice cuál instrucción cayó.</p>
 </section>
 
 <!-- 4 forecast -->
@@ -168,7 +164,6 @@
     <div class="m-user"><span class="m-tag">turno 22, prueba</span>"Escribí las operaciones de array para normalizar estas columnas."</div>
     <div class="m-test"><span class="m-tag">respuesta del modelo</span>código generado, puntuado de 0 a 3 por una regla fija (regex) que busca el patrón pedido</div>
   </div>
-  <p class="takeaway">Entre el pedido y la evaluación hay decenas de miles de tokens.</p>
 </section>
 
 <!-- 6 método modelo -->
@@ -177,7 +172,6 @@
   <h1>El modelo</h1>
   <p>El puntaje 0 a 3 es una posición sobre una escala latente dividida por tres cortes, y decir la instrucción desplaza esa posición en β<sub>d</sub>.</p>
   <div class="fig"><img src="figures/latent_scale.png" alt="Escala latente con cutpoints y dos decisiones reales"></div>
-  <p class="takeaway">Un efecto grande importa solo si arrancás abajo.</p>
 </section>
 
 <!-- 6b método modelo, ecuaciones -->
@@ -199,7 +193,6 @@
   <div class="kicker">Resultados</div>
   <h1>Datos crudos</h1>
   <div class="fig"><img src="figures/raw_landscape.png" alt="Puntaje medio por decisión, baseline vs treatment"></div>
-  <p class="takeaway">Tres patrones visibles antes de cualquier modelo.</p>
 </section>
 
 <!-- 8 R2 forest b1 -->
@@ -207,7 +200,6 @@
   <div class="kicker">Resultados</div>
   <h1>Efectos por instrucción</h1>
   <div class="fig"><img src="figures/forest_b1.png" alt="Forest plot, grupo con HDI sobre cero"></div>
-  <p class="takeaway">Tres instrucciones se benefician de ser repetidas.</p>
   <p class="cap">testing parametrize pasa de no usarse nunca (baseline 0,00) a retenerse cuando se pide (β = 5,4)</p>
 </section>
 
@@ -216,7 +208,6 @@
   <div class="kicker">Resultados</div>
   <h1>Efectos por instrucción</h1>
   <div class="fig"><img src="figures/forest_b2.png" alt="Forest plot, se agrega el grupo no concluyente"></div>
-  <p class="takeaway">Ocho ya se cumplen por defecto, así que repetirlas no cambia nada.</p>
 </section>
 
 <!-- 10 R2 forest full -->
@@ -224,7 +215,6 @@
   <div class="kicker">Resultados</div>
   <h1>Efectos por instrucción</h1>
   <div class="fig"><img src="figures/forest_full.png" alt="Forest plot completo"></div>
-  <p class="takeaway">Una empeora al repetirla, aunque sospechamos un artefacto de medición.</p>
   <p class="cap">la regla de dependencies no new cuenta como nuevo cualquier import, incluidos los ya presentes en el archivo</p>
 </section>
 
@@ -233,7 +223,6 @@
   <div class="kicker">Resultados</div>
   <h1>Política de refuerzo</h1>
   <div class="fig"><img src="figures/policy.png" alt="Ganancia de refuerzo por instrucción"></div>
-  <p class="takeaway">Repetir todas las instrucciones desperdicia tokens en 9 de 12.</p>
   <p class="cap">una ganancia baja no justifica descartar una regla de seguridad, solo ahorra repetición en preferencias ordinarias</p>
 </section>
 
@@ -243,7 +232,6 @@
   <h1>Modelos y codebases</h1>
   <p>Los interceptos por modelo y por codebase concentran su posterior cerca de cero (σ ≈ 0,3), de modo que la heterogeneidad vive en las instrucciones y no en quién ejecuta ni dónde.</p>
   <p>La retención tampoco sube de 26B a 120B parámetros.</p>
-  <p class="takeaway">La desigualdad no es capacidad disfrazada.</p>
   <p class="note">Con baseline de un solo modelo esto sostiene invarianza débil, no ausencia de efectos por modelo.</p>
 </section>
 
@@ -253,7 +241,6 @@
   <h1>Salvaguardas</h1>
   <p>Una preferencia de código y un guardrail son el mismo objeto, a saber una instrucción dicha una vez que compite por atención, por lo que la retención medida acá es un proxy de cómo aguantaría una salvaguarda declarada.</p>
   <p>Como la seguridad es conjuntiva, el cumplimiento agregado puede verse alto mientras la única regla que importa ya cayó.</p>
-  <p class="takeaway">Un agente desplegado necesita monitoreo por instrucción.</p>
 </section>
 
 <!-- 14 conclusión -->
@@ -264,7 +251,6 @@
     <li>Solo 3 de 12 instrucciones pagan el refuerzo, mientras que una política uniforme gasta en las 12.</li>
     <li>El marco per-instrucción habilita monitoreo selectivo, con BKT como dirección natural.</li>
   </ul>
-  <p class="takeaway">La retención es medible, despareja y accionable.</p>
   <p class="note" style="font-family: 'SF Mono', Menlo, monospace">github.com/korentomas/not-all-instructions</p>
   <p class="note">Gracias.</p>
 </section>
@@ -279,7 +265,6 @@
   <div class="kicker">Backup, diagnósticos</div>
   <h1>Posterior predictive check</h1>
   <div class="fig"><img src="figures/ppc.png" alt="Posterior predictive check"></div>
-  <p class="takeaway">El modelo reproduce la distribución observada.</p>
   <p class="cap">cero divergencias, R̂ ≤ 1,01, ESS mínimo 1311, medias 1,70 (baseline) y 2,16 (treatment)</p>
 </section>
 
@@ -288,7 +273,6 @@
   <div class="kicker">Backup, diagnósticos</div>
   <h1>PPC por decisión</h1>
   <div class="fig"><img src="figures/ppc_decision.png" alt="PPC por decisión"></div>
-  <p class="takeaway">Las 12 medias observadas caen dentro del intervalo predictivo del 90%.</p>
 </section>
 
 <!-- 18 backup modelo -->
@@ -315,7 +299,6 @@
     <li>Omission vs commission (arXiv 2604.20911) encuentra que las prohibiciones decaen del 73% al 33% mientras que los requerimientos se mantienen, con señales de auditoría que se ven sanas mientras la restricción ya falló.</li>
     <li>Governance Decay (2606.22528) muestra salvaguardas borradas silenciosamente al compactar contexto.</li>
   </ul>
-  <p class="takeaway">Confirma la dirección, aunque mide a nivel de categoría y no de instrucción individual.</p>
 </section>
 
 <!-- 21 backup robustez -->
