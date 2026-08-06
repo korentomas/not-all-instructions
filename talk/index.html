@@ -74,6 +74,9 @@
   .m-tag { font-size: 1.9vh; letter-spacing: 0.06em; text-transform: uppercase; color: #595959; display: block; margin-bottom: 0.3vh; }
   .m-test .m-tag { color: #b5b5b5; }
   .m-plant .m-tag { color: var(--muted); }
+  .robot-hero { position: absolute; right: 9vw; top: 50%; transform: translateY(-50%); height: 30vh; }
+  .m-test { position: relative; }
+  .chat-robot { position: absolute; right: 2.2vw; bottom: 16vh; height: 13vh; }
   .modelbox { background: #f0eee8; border-radius: 1.6vh; padding: 3vh 2.6vw; display: flex; flex-direction: column; gap: 2.4vh; width: 84vw; }
   .eqrow { display: grid; grid-template-columns: 36vw 1fr; align-items: baseline; gap: 2.5vw; }
   .eqrow .gloss { font-size: 2.5vh; color: var(--muted); line-height: 1.4; }
@@ -113,8 +116,9 @@
 <section class="slide">
   <div class="kicker">El problema</div>
   <h1>Agentes LLM</h1>
-  <p>Los agentes corren cientos de turnos llamando herramientas sin que nadie revise cada paso, mientras que sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
-  <p>Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
+  <p style="max-width: 58vw">Los agentes corren cientos de turnos llamando herramientas sin que nadie revise cada paso, mientras que sus límites operativos y salvaguardas se declaran al principio de la sesión.</p>
+  <p style="max-width: 58vw">Cada instrucción queda enterrada bajo el output que se acumula después de ella y compite por atención contra todo lo que sigue.</p>
+  <img class="robot-hero" src="figures/robots/neutral.png" alt="">
 </section>
 
 <!-- 3 apertura 2 -->
@@ -164,6 +168,7 @@
     <div class="m-user"><span class="m-tag">turno 22, prueba</span>"Escribí las operaciones de array para normalizar estas columnas."</div>
     <div class="m-test"><span class="m-tag">respuesta del modelo</span>código generado, puntuado de 0 a 3 por una regla fija (regex) que busca el patrón pedido</div>
   </div>
+  <img class="chat-robot" src="figures/robots/neutral.png" alt="">
 </section>
 
 <!-- 6 método modelo -->
