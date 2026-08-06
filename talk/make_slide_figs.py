@@ -274,19 +274,22 @@ SHOW = ["testing_parametrize", "dependencies_module_constants",
 idx = [decisions.index(d) for d in SHOW]
 nshow = len(SHOW)
 XLO, XHI = -5.2, 6.8
-fig, ax = plt.subplots(figsize=(13.5, 4.8))
+fig, ax = plt.subplots(figsize=(13.5, 4.4))
 edges = [XLO, *cmean, XHI]
 for k in range(4):
     ax.axvspan(edges[k], edges[k + 1],
                color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
-    ax.text((edges[k] + edges[k + 1]) / 2, nshow - 0.25, str(k), ha="center",
+    ax.text((edges[k] + edges[k + 1]) / 2, nshow - 0.55, str(k), ha="center",
             fontsize=30, fontweight="bold", color="#6f6f6f")
+import matplotlib.transforms as mtransforms
+blend = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
 for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
-    ax.axvline(cx, ymin=0.24, color=INK, lw=1.4, ls="--", zorder=1)
-    ax.text(cx, nshow + 0.55, name, ha="center", fontsize=20, color=INK)
+    ax.axvline(cx, color=INK, lw=1.4, ls="--", zorder=1)
+    ax.text(cx, 1.04, name, transform=blend, ha="center", va="bottom",
+            fontsize=21, color=INK, clip_on=False)
 
 for row, i in enumerate(idx):
-    yy = nshow - 1 - row
+    yy = nshow - 1.35 - row
     x0, x1 = amean[i], amean[i] + bmean[i]
     ax.plot([x0, x1], [yy, yy], color="#7f7f7f", lw=1.8, zorder=2)
     ax.scatter([x0], [yy], s=150, facecolor="white", edgecolor=INK,
@@ -294,9 +297,9 @@ for row, i in enumerate(idx):
     ax.scatter([x1], [yy], s=150, color=INK, zorder=3)
 
 ax.set_xlim(XLO, XHI)
-ax.set_ylim(-1.6, nshow + 1.1)
-ax.set_yticks(range(nshow))
-ax.set_yticklabels([label(d) for d in SHOW[::-1]])
+ax.set_ylim(-0.85, nshow - 0.1)
+ax.set_yticks([nshow - 1.35 - r for r in range(nshow)])
+ax.set_yticklabels([label(d) for d in SHOW])
 ax.set_xlabel(r"Cumplimiento latente $\eta$ (log-odds)")
 ax.spines[["top", "right", "left"]].set_visible(False)
 leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
@@ -304,8 +307,8 @@ leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
               label="Sin instrucción ($\\alpha_d$)"),
        Line2D([0], [0], marker="o", color="none", markerfacecolor=INK,
               markersize=12, label="Con instrucción ($\\alpha_d + \\beta_d$)")]
-ax.legend(handles=leg, loc="lower left", bbox_to_anchor=(0.01, 0.0),
-          frameon=False, ncol=2, columnspacing=1.6)
+ax.legend(handles=leg, loc="upper left", bbox_to_anchor=(1.02, 1.0),
+          frameon=False)
 fig.tight_layout()
 save(fig, "latent_scale")
 
