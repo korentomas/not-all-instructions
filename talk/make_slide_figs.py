@@ -279,8 +279,8 @@ edges = [XLO, *cmean, XHI]
 for k in range(4):
     ax.axvspan(edges[k], edges[k + 1],
                color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
-    ax.text((edges[k] + edges[k + 1]) / 2, nshow - 0.55, str(k), ha="center",
-            fontsize=30, fontweight="bold", color="#6f6f6f")
+    ax.text((edges[k] + edges[k + 1]) / 2, nshow - 0.22, str(k), ha="center",
+            va="top", fontsize=30, fontweight="bold", color="#6f6f6f")
 import matplotlib.transforms as mtransforms
 blend = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
 for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
