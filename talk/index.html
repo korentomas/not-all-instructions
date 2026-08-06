@@ -11,7 +11,7 @@
   @font-face { font-family: "Inter"; src: url("fonts/Inter-Italic.ttf"); font-weight: 400; font-style: italic; }
   :root {
     --ink: #262626;
-    --muted: #6f6f6f;
+    --muted: #616161;
     --faint: #a6a6a6;
     --accent: #262626;
     --surface: #fcfcfb;
@@ -51,7 +51,7 @@
   .title-slide .trans { font-size: 2.6vh; color: var(--muted); font-weight: 400; letter-spacing: 0; margin-left: 0.6vw; }
 
   .kicker { font-size: 2.4vh; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
-  .backup .kicker { color: var(--faint); }
+  .backup .kicker { color: var(--muted); }
 
   .stat-row { display: flex; gap: 6vw; margin-top: 1vh; }
   .stat { display: flex; flex-direction: column; gap: 0.6vh; }
@@ -60,7 +60,7 @@
 
   .timeline { display: flex; width: 84vw; height: 9vh; border-radius: 1.2vh; overflow: hidden; font-size: 2.3vh; font-weight: 600; }
   .timeline div { display: flex; align-items: center; justify-content: center; text-align: center; color: #fff; line-height: 1.25; padding: 0 0.5vw; }
-  .tl-inject { flex: 20; background: var(--faint); }
+  .tl-inject { flex: 20; background: #dedbd5; color: var(--ink) !important; }
   .tl-test { flex: 6; background: var(--ink); }
   .tl-marks { position: relative; width: 84vw; height: 5.2vh; }
   .tl-marks span { position: absolute; top: 0; font-size: 2.2vh; color: var(--accent); font-weight: 600; }
@@ -71,7 +71,7 @@
   .m-user { border: 1px solid var(--line); background: #ffffff; }
   .m-plant { border: 2px solid var(--ink); background: #ffffff; font-weight: 600; }
   .m-test { background: var(--ink); color: #ffffff; }
-  .m-tag { font-size: 1.9vh; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 0.3vh; }
+  .m-tag { font-size: 1.9vh; letter-spacing: 0.06em; text-transform: uppercase; color: #595959; display: block; margin-bottom: 0.3vh; }
   .m-test .m-tag { color: #b5b5b5; }
   .m-plant .m-tag { color: var(--muted); }
   .modelbox { background: #f0eee8; border-radius: 1.6vh; padding: 3vh 2.6vw; display: flex; flex-direction: column; gap: 2.4vh; width: 84vw; }
@@ -80,7 +80,7 @@
   .tl-marks span::before { content: ""; display: inline-block; margin-right: 0.6vw; border-left: 0.8vh solid transparent; border-right: 0.8vh solid transparent; border-bottom: 1.4vh solid var(--accent); }
   .footer-counter {
     position: fixed; right: 2.2vw; bottom: 2.8vh;
-    font-size: 2vh; color: var(--faint); font-variant-numeric: tabular-nums;
+    font-size: 2vh; color: var(--muted); font-variant-numeric: tabular-nums;
     z-index: 10;
   }
   ul { list-style: none; display: flex; flex-direction: column; gap: 1.8vh; }
@@ -88,7 +88,7 @@
   ul li::before { content: ""; position: absolute; left: 0; top: 1.35vh; width: 1.5vh; height: 1.5vh; border-radius: 50%; background: var(--accent); }
   .backup ul li::before { background: var(--faint); }
   .divider { align-items: center; text-align: center; }
-  .divider h1 { color: var(--faint); }
+  .divider h1 { color: var(--muted); }
 
   @media print {
     @page { size: 13.333in 7.5in; margin: 0; }

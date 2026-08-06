@@ -20,7 +20,7 @@ NC = "../experiments-v1/analysis/retention_model.nc"
 # Grayscale, following the paper's figure scheme: dark for groups whose HDI
 # excludes zero (hatch marks the negative one), light gray for inconclusive.
 DARK = "#3a3a3a"     # group in focus / HDI excludes zero
-MUTED = "#c9c9c9"    # inconclusive
+MUTED = "#8f8f8f"    # inconclusive
 INK = "#262626"      # text, axes
 FADE = "#ececec"     # deemphasized bars in build variants
 FADE_ERR = "#d4d4d4"
@@ -242,7 +242,7 @@ fig, ax = plt.subplots(figsize=(9.6, 4.8))
 y = np.arange(len(decisions))
 ax.errorbar(pp_means[dorder], y,
             xerr=[pp_means[dorder] - lo[dorder], hi[dorder] - pp_means[dorder]],
-            fmt="s", color="#8a8a8a", markersize=9, zorder=2, **ERR)
+            fmt="s", color="#7f7f7f", markersize=9, zorder=2, **ERR)
 ax.scatter(obs_means[dorder], y, color="black", s=80, zorder=3)
 ax.set_yticks(y)
 ax.set_yticklabels([label(decisions[i]) for i in dorder])
@@ -250,7 +250,7 @@ ax.set_xlabel("Puntaje medio")
 ax.set_ylim(-0.7, len(decisions) - 1 + 0.9)
 leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="black",
               markersize=10, label="Observado"),
-       Line2D([0], [0], marker="s", color="none", markerfacecolor="#8a8a8a",
+       Line2D([0], [0], marker="s", color="none", markerfacecolor="#7f7f7f",
               markersize=10, label="Predicho (PI 90%)")]
 ax.legend(handles=leg, frameon=False, loc="upper left",
           bbox_to_anchor=(1.02, 1.0))
@@ -277,7 +277,7 @@ for k in range(4):
     ax.axvspan(edges[k], edges[k + 1],
                color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
     ax.text((edges[k] + edges[k + 1]) / 2, n12 - 0.1, str(k), ha="center",
-            fontsize=26, fontweight="bold", color="#8a8a8a")
+            fontsize=26, fontweight="bold", color="#6f6f6f")
 for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
     ax.axvline(cx, color=INK, lw=1.4, ls="--", zorder=1)
     ax.text(cx, n12 + 0.75, name, ha="center", fontsize=18, color=INK)
@@ -285,7 +285,7 @@ for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
 for row, i in enumerate(order12):
     yy = n12 - 1 - row
     x0, x1 = amean[i], amean[i] + bmean[i]
-    ax.plot([x0, x1], [yy, yy], color="#8a8a8a", lw=1.6, zorder=2)
+    ax.plot([x0, x1], [yy, yy], color="#7f7f7f", lw=1.6, zorder=2)
     ax.scatter([x0], [yy], s=110, facecolor="white", edgecolor=INK,
                linewidth=2.0, zorder=3)
     ax.scatter([x1], [yy], s=110, color=INK, zorder=3)
