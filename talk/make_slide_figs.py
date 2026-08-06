@@ -258,5 +258,54 @@ style(ax)
 fig.tight_layout()
 save(fig, "ppc_decision")
 
+# ----------------------------------------------------- latent scale ---------
+# Why ordered logistic: the score is where eta lands between three cutpoints.
+# Uses posterior means: cutpoints and (alpha, beta) for two real decisions.
+cmean = post["cutpoints"].values.reshape(-1, 3).mean(0)
+amean = post["alpha"].values.reshape(-1, len(decisions)).mean(0)
+bmean = post["beta"].values.reshape(-1, len(decisions)).mean(0)
+i_par = decisions.index("testing_parametrize")
+i_doc = decisions.index("docs_numpy_style")
+
+XLO, XHI = -5.2, 6.8
+fig, ax = plt.subplots(figsize=(11.5, 4.2))
+edges = [XLO, *cmean, XHI]
+for k in range(4):
+    ax.axvspan(edges[k], edges[k + 1],
+               color="#f1efe9" if k % 2 == 0 else "#e4e1da", zorder=0)
+    ax.text((edges[k] + edges[k + 1]) / 2, 2.55, str(k), ha="center",
+            fontsize=30, fontweight="bold", color="#8a8a8a")
+for cx, name in zip(cmean, ("$c_1$", "$c_2$", "$c_3$")):
+    ax.axvline(cx, color=INK, lw=1.4, ls="--", zorder=1)
+    ax.text(cx, 3.35, name, ha="center", fontsize=20, color=INK)
+
+rows = [(i_par, 1.6, "testing parametrize"), (i_doc, 0.6, "docs numpy style")]
+for i, yy, name in rows:
+    x0, x1 = amean[i], amean[i] + bmean[i]
+    ax.annotate("", xy=(x1, yy), xytext=(x0, yy),
+                arrowprops=dict(arrowstyle="-|>", color=INK, lw=2.6,
+                                shrinkA=8, shrinkB=0))
+    ax.scatter([x0], [yy], s=140, facecolor="white", edgecolor=INK,
+               linewidth=2.2, zorder=3)
+    ax.scatter([x1], [yy], s=140, color=INK, zorder=3)
+    ax.text(min(x0, x1) - 0.25, yy + 0.28,
+            f"{name}  ($\\alpha$ = {x0:.1f}, $\\beta$ = {bmean[i]:+.1f})",
+            fontsize=16, color=INK, ha="left")
+
+ax.set_xlim(XLO, XHI)
+ax.set_ylim(0, 3.8)
+ax.set_yticks([])
+ax.set_xlabel(r"Cumplimiento latente $\eta$ (log-odds)")
+ax.spines[["top", "right", "left"]].set_visible(False)
+leg = [Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
+              markeredgecolor=INK, markeredgewidth=2, markersize=11,
+              label="Sin instrucción ($\\alpha_d$)"),
+       Line2D([0], [0], marker="o", color="none", markerfacecolor=INK,
+              markersize=11, label="Con instrucción ($\\alpha_d + \\beta_d$)")]
+ax.legend(handles=leg, loc="upper left", bbox_to_anchor=(1.02, 1.0),
+          frameon=False)
+fig.tight_layout()
+save(fig, "latent_scale")
+
 print("betas:", {n: round(float(bs.loc[f'beta[{n}]', 'mean']), 2)
                  for n in ("testing_parametrize", "dependencies_no_new")})
